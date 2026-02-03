@@ -1,0 +1,26 @@
+[
+  { 
+    "id": 1, 
+    "title": "Urban Legends", 
+    "author": "MangaDev", 
+    "views": "12k", 
+    "type": "Action", 
+    "color": "#a855f7", 
+    "content": "Chapitre 1: L'ombre de Kinshasa s'éveille...", 
+    "isFav": true, 
+    "isLiked": true,
+    "banner": "https://via.placeholder.com/400x200"
+  },
+  { 
+    "id": 2, 
+    "title": "Shadow Hunter", 
+    "author": "Z-Art", 
+    "views": "85k", 
+    "type": "Manga", 
+    "color": "#3b82f6", 
+    "content": "L'arc final commence maintenant !", 
+    "isFav": false, 
+    "isLiked": true,
+    "banner": "https://via.placeholder.com/400x200"
+  }
+]
