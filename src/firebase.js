@@ -1,20 +1,44 @@
+// src/firebase.js
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { getFirestore } from "firebase/firestore"; // <-- AJOUTÉ
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  onAuthStateChanged
+} from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
+// 🔥 CONFIG OFFICIELLE COMICCRAFTE STUDIO
 const firebaseConfig = {
-  apiKey: "TON_API_KEY",
-  authDomain: "comiccrafte.firebaseapp.com",
-  projectId: "comiccrafte",
-  storageBucket: "comiccrafte.appspot.com",
-  messagingSenderId: "TON_ID",
-  appId: "TON_APP_ID"
+  apiKey: "AIzaSyAalUx5YEWq1Bs9HW_VFiqqqZpWenW69CA",
+  authDomain: "comiccrafte-studio.firebaseapp.com",
+  projectId: "comiccrafte-studio",
+  storageBucket: "comiccrafte-studio.firebasestorage.app",
+  messagingSenderId: "322099627324",
+  appId: "1:322099627324:web:f3298dac6afcd3e0faca39"
 };
 
+// INITIALISATION
 const app = initializeApp(firebaseConfig);
+
+// AUTH
 export const auth = getAuth(app);
-export const db = getFirestore(app); // <-- LE SERVEUR DE DONNÉES
-export const provider = new GoogleAuthProvider();
+export const googleProvider = new GoogleAuthProvider();
 
-export const loginWithGoogle = () => signInWithPopup(auth, provider);
+// GOOGLE LOGIN
+export const loginWithGoogle = async () => {
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    return result.user;
+  } catch (error) {
+    console.error("Google login error:", error);
+    throw error;
+  }
+};
 
+// FIRESTORE
+export const db = getFirestore(app);
+
+// OBSERVER USER
+export const onUserStateChange = (callback) =>
+  onAuthStateChanged(auth, callback);
