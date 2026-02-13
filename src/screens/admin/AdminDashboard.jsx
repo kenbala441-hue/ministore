@@ -1,99 +1,115 @@
-import React, { useState } from 'react';
+// src/screens/admin/AdminDashboard.jsx
+import React, { useState } from "react";
+import AdminLayout from "./layout/AdminLayout.jsx"; // chemin correct
+import Overview from "./dashboard/Overview.jsx";     // chemin correct
+
+const ADMIN_CODES = [
+  "ADM-9F4KX2P7M8QJZ1W6L0R5C3ADEV-SECURE-ACCESS-0001",
+  "ADM-A8QZ5R6M9F7C4W0J3L1PDEV-SECURE-ACCESS-0002",
+  "ADM-ZM4Q1P7L9R6F5W3A8J0CDEV-SECURE-ACCESS-0003",
+  "ADM-7R9F0C4LQZ5W6P1A8MJDEV-SECURE-ACCESS-0004",
+  "ADM-P6Z9W8Q5F1R7C4M0A3LJDEV-SECURE-ACCESS-0005",
+  "ADM-1QZ6F3W9C5R8M7P0A4LJDEV-SECURE-ACCESS-0006",
+  "ADM-W5F7PZ1Q4R8C6L9M0A3JDEV-SECURE-ACCESS-0007",
+  "ADM-9M8ZP5R6F0WQ7C1A4L3JDEV-SECURE-ACCESS-0008",
+  "ADM-Q0R6F1Z8W9P7C5M4A3LJDEV-SECURE-ACCESS-0009",
+  "ADM-4FQ9Z5R7C1W6M8P0A3LJDEV-SECURE-ACCESS-0010",
+];
 
 export default function AdminDashboard({ setView }) {
-  const stats = { users: 1250, authors: 45, reports: 3 };
+  const [code, setCode] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
 
-  const [users, setUsers] = useState([
-    { id: 1, name: "DarkSasuke99", status: "ACTIF", role: "Auteur" },
-    { id: 2, name: "LeTroll2024", status: "ACTIF", role: "Lecteur" },
-  ]);
+  const handleAccess = () => {
+    if (ADMIN_CODES.includes(code.trim())) {
+      setError("");
+      setSuccess(true);
 
-  const banUser = (id) => {
-    setUsers(prev =>
-      prev.map(u => u.id === id ? { ...u, status: "BANNI" } : u)
-    );
+      setTimeout(() => {
+        setView("admin"); // mène vers AdminLayout / Overview
+      }, 2000);
+    } else {
+      setError("⛔ Code invalide. Accès refusé.");
+    }
   };
+
+  // ✅ Si accès validé, afficher directement le layout avec Overview
+  if (success) {
+    return <AdminLayout setView={setView}><Overview /></AdminLayout>;
+  }
 
   return (
     <div style={s.container}>
-      <header style={s.header}>
-        <h2 style={s.title}>
-          PANEL ADMIN <span style={s.live}>● LIVE</span>
-        </h2>
-        <button style={s.exitBtn} onClick={() => setView('home')}>
-          Quitter
-        </button>
-      </header>
+      <h2 style={s.title}>🔐 ACCÈS ADMINISTRATEUR</h2>
 
-      {/* STATS */}
-      <div style={s.statsGrid}>
-        <div style={s.statCard}>
-          <h3>{stats.users}</h3>
-          <p>Membres</p>
-        </div>
+      <p style={s.text}>
+        Félicitations si vous êtes ici.  
+        Pour continuer, vous devez prouver que vous êtes **autorisé** à
+        accéder à l’administration.
+      </p>
 
-        <div style={s.statCard}>
-          <h3>{stats.authors}</h3>
-          <p>Auteurs</p>
-        </div>
+      <input
+        style={s.input}
+        placeholder="Entrer le code d’accès admin (67 caractères)"
+        value={code}
+        onChange={(e) => setCode(e.target.value)}
+      />
 
-        <div style={{ ...s.statCard, border: '1px solid red' }}>
-          <h3 style={{ color: 'red' }}>{stats.reports}</h3>
-          <p>Signalements</p>
-        </div>
-      </div>
+      {error && <p style={s.error}>{error}</p>}
 
-      {/* UTILISATEURS */}
-      <h3 style={s.sectionTitle}>Modération & Utilisateurs</h3>
-
-      <div style={s.userList}>
-        {users.map(user => (
-          <div key={user.id} style={s.userRow}>
-            <div>
-              <div style={s.userName}>
-                {user.name} ({user.role})
-              </div>
-              <div
-                style={{
-                  fontSize: '10px',
-                  color: user.status === "BANNI" ? 'red' : 'lime'
-                }}
-              >
-                {user.status}
-              </div>
-            </div>
-
-            {user.status !== "BANNI" && (
-              <button style={s.banBtn} onClick={() => banUser(user.id)}>
-                BANNIR
-              </button>
-            )}
-          </div>
-        ))}
-      </div>
-
-      <footer style={s.footer}>
-        <p>
-          Code Admin Actif :
-          <span style={{ color: '#a855f7' }}> COMIC-CRAFT-CONFIDENTIAL</span>
-        </p>
-      </footer>
+      <button style={s.button} onClick={handleAccess}>
+        Continuer
+      </button>
     </div>
   );
 }
 
 const s = {
-  container: { background: '#000', minHeight: '100vh', padding: 15, color: '#fff' },
-  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  title: { fontSize: 18, color: '#ff4444' },
-  live: { fontSize: 10, color: '#00ff00', marginLeft: 8 },
-  exitBtn: { background: '#222', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: 6 },
-  statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginBottom: 25 },
-  statCard: { background: '#111', padding: 15, borderRadius: 10, textAlign: 'center', border: '1px solid #333' },
-  sectionTitle: { fontSize: 14, color: '#888', marginBottom: 10 },
-  userList: { background: '#0a0a0a', borderRadius: 10 },
-  userRow: { display: 'flex', justifyContent: 'space-between', padding: 15, borderBottom: '1px solid #1a1a1a' }, // ✅ ici padding = 15
-  userName: { fontSize: 13, fontWeight: 'bold' },
-  banBtn: { border: '1px solid red', background: 'transparent', color: 'red', padding: '4px 10px', borderRadius: 5 },
-  footer: { marginTop: 30, fontSize: 9, textAlign: 'center', opacity: 0.5 }
+  container: {
+    background: "#000",
+    minHeight: "100vh",
+    color: "#fff",
+    padding: 30,
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    maxWidth: 500,
+    margin: "0 auto",
+  },
+  title: {
+    color: "#ff4444",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  text: {
+    fontSize: 13,
+    opacity: 0.8,
+    marginBottom: 15,
+    textAlign: "center",
+  },
+  input: {
+    background: "#111",
+    border: "1px solid #333",
+    color: "#fff",
+    padding: 10,
+    borderRadius: 6,
+    fontSize: 12,
+    marginBottom: 10,
+  },
+  button: {
+    background: "#a855f7",
+    border: "none",
+    padding: 10,
+    borderRadius: 6,
+    color: "#000",
+    fontWeight: "bold",
+    cursor: "pointer",
+  },
+  error: {
+    color: "red",
+    fontSize: 11,
+    marginBottom: 10,
+    textAlign: "center",
+  },
 };

@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
-import { auth, googleProvider } from '../firebase';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import { auth, googleProvider, db } from '../firebase';
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signInWithPopup,
+} from 'firebase/auth';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function Login() {
   const [isSignup, setIsSignup] = useState(false);
@@ -13,23 +18,61 @@ export default function Login() {
     e.preventDefault();
     setError('');
     setLoading(true);
+
     try {
       if (isSignup) {
-        // Création d'un compte
-        await createUserWithEmailAndPassword(auth, email, password);
+        const result = await createUserWithEmailAndPassword(
+          auth,
+          email,
+          password
+        );
+        const user = result.user;
+
+        await setDoc(
+          doc(db, 'users', user.uid),
+          {
+            username: user.displayName || 'Utilisateur',
+            role: 'user',
+            plan: 'standard',
+            ink: 0,
+            followers: 0,
+            following: 0,
+            seriesCount: 0,
+            createdAt: serverTimestamp(),
+            acceptedTerms: true,
+          },
+          { merge: true }
+        );
       } else {
-        // Connexion
         await signInWithEmailAndPassword(auth, email, password);
       }
     } catch (err) {
       setError(err.message);
     }
+
     setLoading(false);
   };
 
   const handleGoogleLogin = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+
+      await setDoc(
+        doc(db, 'users', user.uid),
+        {
+          username: user.displayName || 'Utilisateur',
+          role: 'user',
+          plan: 'standard',
+          ink: 0,
+          followers: 0,
+          following: 0,
+          seriesCount: 0,
+          createdAt: serverTimestamp(),
+          acceptedTerms: true,
+        },
+        { merge: true }
+      );
     } catch (err) {
       setError(err.message);
     }
@@ -39,7 +82,8 @@ export default function Login() {
     <div style={s.container}>
       <h1 style={s.title}>Bienvenue dans l'univers Comiccrafte</h1>
       <p style={s.subtitle}>
-        Pour participer à cette grande aventure, veuillez {isSignup ? 'créer un compte' : 'vous connecter'}.
+        Pour participer à cette grande aventure, veuillez{' '}
+        {isSignup ? 'créer un compte' : 'vous connecter'}.
       </p>
 
       {error && <p style={s.error}>{error}</p>}
@@ -62,13 +106,20 @@ export default function Login() {
           required
         />
         <button type="submit" style={s.btn} disabled={loading}>
-          {loading ? 'Chargement...' : isSignup ? 'Créer un compte' : 'Se connecter'}
+          {loading
+            ? 'Chargement...'
+            : isSignup
+            ? 'Créer un compte'
+            : 'Se connecter'}
         </button>
       </form>
 
       <p style={s.toggleText}>
-        {isSignup ? 'Déjà un compte ?' : "Pas encore de compte ?"}{' '}
-        <span style={s.toggleLink} onClick={() => setIsSignup(!isSignup)}>
+        {isSignup ? 'Déjà un compte ?' : 'Pas encore de compte ?'}{' '}
+        <span
+          style={s.toggleLink}
+          onClick={() => setIsSignup(!isSignup)}
+        >
           {isSignup ? 'Connectez-vous' : 'Créez-en un'}
         </span>
       </p>
@@ -81,6 +132,7 @@ export default function Login() {
     </div>
   );
 }
+
 const s = {
   container: {
     display: 'flex',
@@ -97,7 +149,6 @@ const s = {
     `,
     animation: 'fadeIn 1.2s ease-in-out',
   },
-
   title: {
     fontSize: 26,
     marginBottom: 10,
@@ -107,7 +158,6 @@ const s = {
     WebkitBackgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
   },
-
   subtitle: {
     fontSize: 14,
     color: '#cbd5f5',
@@ -115,13 +165,11 @@ const s = {
     textAlign: 'center',
     maxWidth: 360,
   },
-
   error: {
     color: '#f87171',
     marginBottom: 12,
     textAlign: 'center',
   },
-
   form: {
     display: 'flex',
     flexDirection: 'column',
@@ -132,7 +180,6 @@ const s = {
     borderRadius: 12,
     boxShadow: '0 0 40px rgba(168,85,247,0.15)',
   },
-
   input: {
     padding: 12,
     marginBottom: 15,
@@ -142,7 +189,6 @@ const s = {
     color: 'white',
     outline: 'none',
   },
-
   btn: {
     padding: 12,
     background: 'linear-gradient(90deg, #a855f7, #6366f1)',
@@ -154,26 +200,22 @@ const s = {
     marginBottom: 10,
     boxShadow: '0 0 20px rgba(168,85,247,0.4)',
   },
-
   toggleText: {
     fontSize: 12,
     color: '#94a3b8',
     marginTop: 15,
     textAlign: 'center',
   },
-
   toggleLink: {
     color: '#a855f7',
     cursor: 'pointer',
     fontWeight: 'bold',
   },
-
   hr: {
     width: '100%',
     border: '0.5px solid #1e293b',
     margin: '25px 0',
   },
-
   googleBtn: {
     padding: 12,
     width: 320,

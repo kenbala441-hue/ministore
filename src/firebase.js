@@ -6,7 +6,20 @@ import {
   signInWithPopup,
   onAuthStateChanged
 } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import {
+  getFirestore,
+  collection,
+  doc,
+  addDoc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  onSnapshot,
+  updateDoc,
+  deleteDoc
+} from "firebase/firestore";
 
 // 🔥 CONFIG OFFICIELLE COMICCRAFTE STUDIO
 const firebaseConfig = {
@@ -38,6 +51,58 @@ export const loginWithGoogle = async () => {
 
 // FIRESTORE
 export const db = getFirestore(app);
+
+// COLLECTION STORIES
+export const storiesCollection = collection(db, "stories");
+
+// AJOUTER UNE HISTOIRE
+export const addStory = async (storyData) => {
+  try {
+    const docRef = await addDoc(storiesCollection, storyData);
+    return docRef.id;
+  } catch (error) {
+    console.error("Erreur ajout story:", error);
+    throw error;
+  }
+};
+
+// RÉCUPÉRER UNE HISTOIRE PAR ID
+export const getStory = async (id) => {
+  const docRef = doc(db, "stories", id);
+  const docSnap = await getDoc(docRef);
+  if (docSnap.exists()) return { id: docSnap.id, ...docSnap.data() };
+  return null;
+};
+
+// RÉCUPÉRER TOUTES LES HISTOIRES (avec options)
+export const getStories = async (genre = null) => {
+  let q = query(storiesCollection, orderBy("createdAt", "desc"));
+  if (genre && genre !== "Tous") q = query(storiesCollection, where("genres", "array-contains", genre), orderBy("createdAt", "desc"));
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+};
+
+// OBSERVER LES HISTOIRES EN TEMPS RÉEL
+export const onStoriesUpdate = (callback, genre = null) => {
+  let q = query(storiesCollection, orderBy("createdAt", "desc"));
+  if (genre && genre !== "Tous") q = query(storiesCollection, where("genres", "array-contains", genre), orderBy("createdAt", "desc"));
+  return onSnapshot(q, (snapshot) => {
+    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    callback(data);
+  });
+};
+
+// METTRE À JOUR UNE HISTOIRE
+export const updateStory = async (id, updatedData) => {
+  const docRef = doc(db, "stories", id);
+  await updateDoc(docRef, updatedData);
+};
+
+// SUPPRIMER UNE HISTOIRE
+export const deleteStory = async (id) => {
+  const docRef = doc(db, "stories", id);
+  await deleteDoc(docRef);
+};
 
 // OBSERVER USER
 export const onUserStateChange = (callback) =>
