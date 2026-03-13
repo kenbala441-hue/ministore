@@ -1,0 +1,63 @@
+/* AuthorContractScreen.css */
+.contract-container {
+  min-height: 100vh;
+  background: linear-gradient(to bottom, #0f0f1f, #1a0033, #000814);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  color: white;
+}
+
+.contract-card {
+  max-width: 600px;
+  width: 100%;
+  background-color: rgba(255,255,255,0.05);
+  border-radius: 15px;
+  padding: 30px;
+  border: 1px solid #00f5ff;
+  box-shadow: 0 0 20px #5f2eea;
+}
+
+.contract-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #00f5ff;
+  text-align: center;
+  text-shadow: 0 0 15px #00f5ff;
+  margin-bottom: 25px;
+}
+
+.checkbox, .checkbox-active, .button {
+  padding: 15px;
+  border-radius: 12px;
+  width: 100%;
+  margin-top: 20px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+}
+
+.checkbox {
+  border: 1px solid #5f2eea;
+  background: transparent;
+  color: white;
+}
+
+.checkbox-active {
+  background: #5f2eea;
+  color: white;
+  box-shadow: 0 0 15px #5f2eea;
+}
+
+.button {
+  background-color: #00f5ff;
+  border: none;
+  color: #000;
+  box-shadow: 0 0 20px #00f5ff;
+}
+
+.button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}

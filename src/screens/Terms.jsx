@@ -6,8 +6,6 @@ import { signOut } from 'firebase/auth';
 export default function Terms({ setView, onAccept }) {
   const [checked, setChecked] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  // 🔹 Vérification Firebase prête
   const [firebaseReady, setFirebaseReady] = useState(false);
 
   useEffect(() => {
@@ -24,11 +22,8 @@ export default function Terms({ setView, onAccept }) {
       setView('login');
       return;
     }
-
     setLoading(true);
-
     try {
-      // 🔹 Mettre à jour Firestore
       await setDoc(
         doc(db, 'users', user.uid),
         {
@@ -37,13 +32,8 @@ export default function Terms({ setView, onAccept }) {
         },
         { merge: true }
       );
-
       console.log('Signature ComicCraft enregistrée');
-
-      // 🔹 Notifier App.jsx
       if (onAccept) onAccept();
-
-      // 🔹 Redirection immédiate
       setView('home');
     } catch (error) {
       console.error('Erreur Firestore :', error);
@@ -66,7 +56,12 @@ export default function Terms({ setView, onAccept }) {
     <div style={s.container}>
       <div style={s.card}>
         <div style={s.header}>
-          <button onClick={async () => { await signOut(auth); setView('login'); }} style={s.back}>←</button>
+          <button
+            onClick={async () => { await signOut(auth); setView('login'); }}
+            style={s.back}
+          >
+            ←
+          </button>
           <h2 style={s.title}>PROTOCOLE COMICCRAFTE</h2>
         </div>
 
@@ -80,14 +75,12 @@ export default function Terms({ setView, onAccept }) {
             </div>
           ))}
 
-          {/* 🔹 Bouton "Voir plus" redirige vers LegalDetails */}
           <button
             style={s.moreLink}
             onClick={() => setView('legal_details')}
           >
             Voir les 20+ autres règles détaillées (Confidentialité & Cookies)...
           </button>
-
         </div>
 
         <div style={s.footer}>
@@ -104,7 +97,12 @@ export default function Terms({ setView, onAccept }) {
           <button
             disabled={!checked || !firebaseReady || loading}
             onClick={handleAccept}
-            style={{ ...s.btn, opacity: checked && firebaseReady && !loading ? 1 : 0.3 }}
+            style={{
+              ...s.btn,
+              opacity: checked && firebaseReady && !loading ? 1 : 0.3,
+              transform: checked && firebaseReady && !loading ? 'scale(1.05)' : 'scale(1)',
+              transition: 'transform 0.2s ease, opacity 0.2s ease',
+            }}
           >
             {loading ? 'EN COURS...' : 'SIGNER ET ENTRER'}
           </button>
@@ -115,24 +113,53 @@ export default function Terms({ setView, onAccept }) {
 }
 
 // ==========================
-// Styles BACKGROUND original
+// Styles avec fond animé et scale
 const s = {
-  container: { minHeight: '100vh', background: 'radial-gradient(circle at center, #0a1128, #000)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' },
-  card: { maxWidth: '450px', width: '100%', backgroundColor: 'rgba(10, 10, 20, 0.85)', backdropFilter: 'blur(15px)', borderRadius: '20px', border: '1px solid #a855f766', padding: '25px', display: 'flex', flexDirection: 'column', maxHeight: '90vh', boxShadow: '0 0 30px rgba(168, 85, 247, 0.15)' },
+  container: {
+    minHeight: '100vh',
+    background: 'radial-gradient(circle at center, #0a1128, #000)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '20px',
+    animation: 'bgPulse 6s infinite alternate',
+  },
+  '@keyframes bgPulse': {
+    '0%': { backgroundPosition: '0% 50%' },
+    '100%': { backgroundPosition: '100% 50%' },
+  },
+  card: {
+    maxWidth: '450px',
+    width: '100%',
+    backgroundColor: 'rgba(10, 10, 20, 0.85)',
+    backdropFilter: 'blur(20px)',
+    borderRadius: '20px',
+    border: '1px solid #a855f766',
+    padding: '25px',
+    display: 'flex',
+    flexDirection: 'column',
+    maxHeight: '90vh',
+    boxShadow: '0 0 35px rgba(168, 85, 247, 0.25)',
+    animation: 'scaleFadeIn 0.5s ease forwards',
+  },
+  '@keyframes scaleFadeIn': {
+    '0%': { opacity: 0, transform: 'scale(0.95)' },
+    '100%': { opacity: 1, transform: 'scale(1)' },
+  },
   header: { display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' },
   back: { background: 'none', border: 'none', color: '#fff', fontSize: '20px', cursor: 'pointer' },
   title: { fontSize: '16px', letterSpacing: '3px', background: 'linear-gradient(90deg, #a855f7, #00f5d4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontWeight: 'bold' },
-  scrollArea: { overflowY: 'auto', paddingRight: '10px', marginBottom: '20px' },
+  scrollArea: { overflowY: 'auto', paddingRight: '10px', marginBottom: '20px', scrollBehavior: 'smooth' },
   intro: { fontSize: '11px', color: '#555', marginBottom: '20px', textAlign: 'center', textTransform: 'uppercase' },
   section: { marginBottom: '20px', borderLeft: '2px solid #a855f7', paddingLeft: '15px', background: 'rgba(255,255,255,0.02)', padding: '10px' },
   secTitle: { fontSize: '12px', color: '#a855f7', marginBottom: '5px', fontWeight: 'bold' },
   secContent: { fontSize: '11px', color: '#ccc', lineHeight: '1.5' },
-  moreLink: { 
-    textAlign: 'center', 
-    color: '#00f5d4', 
-    fontSize: '11px', 
-    cursor: 'pointer', 
-    margin: '15px 0', 
+  moreLink: {
+    textAlign: 'center',
+    color: '#00f5d4',
+    fontSize: '11px',
+    cursor: 'pointer',
+    margin: '15px 0',
     textDecoration: 'underline',
     background: 'none',
     border: 'none',

@@ -1,29 +1,35 @@
 import React, { useEffect, useState } from 'react';
-import { db } from '../firebase';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { db /*, messaging */ } from '../firebase/index.js'; // messaging désactivé pour l'instant
 
-export default function Notifications({ setView }) {
+export default function Notifications({ userId, setView }) {
   const [notifications, setNotifications] = useState([]);
   const [filter, setFilter] = useState('all'); // all, studio, social, system
 
+  // 🔹 Étape 1 : Firestore en temps réel pour cet utilisateur
   useEffect(() => {
-    const q = query(collection(db, 'notifications'), orderBy('timestamp', 'desc'));
+    if (!userId) return;
+
+    const notifRef = collection(db, 'notifications', userId, 'items');
+    const q = query(notifRef, orderBy('createdAt', 'desc'));
+    
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const notifs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setNotifications(notifs);
     });
-    return () => unsubscribe();
-  }, []);
 
-  // Filtrage des notifications locales
+    return () => unsubscribe();
+  }, [userId]);
+
+  // 🔹 Étape 2 : Filtrage local
   const filteredNotifs = notifications.filter(n => {
     if (filter === 'all') return true;
-    return n.category === filter;
+    return n.type === filter;
   });
 
   return (
     <div style={s.container}>
-      {/* HEADER FUTURISTE */}
+      {/* HEADER */}
       <div style={s.header}>
         <button onClick={() => setView('home')} style={s.backBtn}>←</button>
         <h2 style={s.glitchTitle}>FLUX NEURAL</h2>
@@ -37,8 +43,8 @@ export default function Notifications({ setView }) {
             onClick={() => setFilter(tab)}
             style={{
               ...s.tabBtn,
-              color: filter === tab ? '#00f5d4' : '#666',
-              borderBottom: filter === tab ? '2px solid #00f5d4' : '2px solid transparent'
+              color: filter === tab ? getCategoryColor(tab) : '#666',
+              borderBottom: filter === tab ? `2px solid ${getCategoryColor(tab)}` : '2px solid transparent'
             }}
           >
             {tab.toUpperCase()}
@@ -46,7 +52,7 @@ export default function Notifications({ setView }) {
         ))}
       </div>
 
-      {/* LISTE DES NOTIFICATIONS STYLE "INTERFACE DE HACK" */}
+      {/* LISTE DES NOTIFICATIONS */}
       <div style={s.list}>
         {filteredNotifs.length === 0 ? (
           <div style={s.emptyState}>
@@ -57,19 +63,19 @@ export default function Notifications({ setView }) {
           filteredNotifs.map((notif) => (
             <div 
               key={notif.id} 
-              style={{...s.card, borderColor: getCategoryColor(notif.category)}}
+              style={{...s.card, borderColor: getCategoryColor(notif.type)}}
               onClick={() => notif.targetView && setView(notif.targetView)}
             >
               <div style={s.cardHeader}>
-                <span style={{...s.categoryTag, color: getCategoryColor(notif.category)}}>
-                  [{notif.category || 'INFO'}]
+                <span style={{...s.categoryTag, color: getCategoryColor(notif.type)}}>
+                  [{notif.type.toUpperCase()}]
                 </span>
                 <span style={s.date}>
-                  {notif.timestamp ? new Date(notif.timestamp.toDate()).toLocaleTimeString() : 'NOW'}
+                  {notif.createdAt?.toDate ? notif.createdAt.toDate().toLocaleTimeString() : 'NOW'}
                 </span>
               </div>
               <p style={s.message}>{notif.message}</p>
-              <div style={{...s.glowEffect, backgroundColor: getCategoryColor(notif.category)}}></div>
+              <div style={{...s.glowEffect, backgroundColor: getCategoryColor(notif.type)}}></div>
             </div>
           ))
         )}
@@ -78,16 +84,17 @@ export default function Notifications({ setView }) {
   );
 }
 
-// Fonction pour définir les couleurs par type
+// 🔹 Couleurs par catégorie
 const getCategoryColor = (cat) => {
   switch(cat) {
-    case 'studio': return '#a855f7'; // Violet Studio
-    case 'social': return '#38bdf8'; // Bleu Amis
-    case 'system': return '#ff0055'; // Rouge Alerte/MAJ
-    default: return '#00f5d4'; // Cyan par défaut
+    case 'studio': return '#a855f7';
+    case 'social': return '#38bdf8';
+    case 'system': return '#ff0055';
+    default: return '#00f5d4';
   }
 };
 
+// 🔹 Styles néon/futuristes
 const s = {
   container: { padding: '20px', minHeight: '100vh', background: 'radial-gradient(circle at top, #0a0a20, #000)', color: 'white' },
   header: { display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '30px' },
@@ -96,15 +103,7 @@ const s = {
   tabs: { display: 'flex', justifyContent: 'space-between', marginBottom: '25px', borderBottom: '1px solid #222' },
   tabBtn: { background: 'none', border: 'none', padding: '10px 5px', fontSize: '10px', fontWeight: 'bold', letterSpacing: '1px', transition: '0.3s' },
   list: { display: 'flex', flexDirection: 'column', gap: '15px' },
-  card: {
-    padding: '15px',
-    background: 'rgba(255,255,255,0.03)',
-    borderRadius: '4px',
-    borderLeft: '4px solid',
-    position: 'relative',
-    overflow: 'hidden',
-    backdropFilter: 'blur(10px)',
-  },
+  card: { padding: '15px', background: 'rgba(255,255,255,0.03)', borderRadius: '4px', borderLeft: '4px solid', position: 'relative', overflow: 'hidden', backdropFilter: 'blur(10px)', cursor: 'pointer' },
   cardHeader: { display: 'flex', justifyContent: 'space-between', marginBottom: '8px' },
   categoryTag: { fontSize: '10px', fontWeight: 'bold' },
   date: { fontSize: '9px', color: '#444' },

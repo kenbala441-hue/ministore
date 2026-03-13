@@ -1,68 +1,105 @@
+/* ============================= */
+/* 🔥 RÈGLE 8 ÉTAPES – INDEX CSS */
+/* ============================= */
+
+/* 1️⃣ Reset total écran */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* 2️⃣ Root futuriste */
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color-scheme: dark;
+  color: rgba(255, 255, 255, 0.9);
+  background-color: #050510;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* 3️⃣ Couleurs néon dynamiques */
+  --neon-primary: #00f7ff;
+  --neon-pink: #ff00ff;
+  --neon-green: #39ff14;
+  --neon-blue: #0066ff;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
+/* 4️⃣ Body plein écran + fond animé */
 body {
-  margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  background-color: #050510;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-x: hidden;
+
+  background: radial-gradient(circle at 20% 30%, rgba(0,247,255,0.15), transparent 40%),
+              radial-gradient(circle at 80% 70%, rgba(255,0,255,0.15), transparent 40%),
+              radial-gradient(circle at 50% 50%, rgba(57,255,20,0.08), transparent 60%),
+              #050510;
+
+  animation: neonBackground 10s infinite alternate ease-in-out;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+/* 5️⃣ Animation néon lente */
+@keyframes neonBackground {
+  0% {
+    background-position: 0% 0%, 100% 100%, 50% 50%;
+  }
+  100% {
+    background-position: 30% 20%, 70% 80%, 60% 40%;
+  }
 }
 
+/* 6️⃣ Liens néon */
+a {
+  font-weight: 500;
+  color: var(--neon-primary);
+  text-decoration: none;
+  transition: 0.3s;
+}
+
+a:hover {
+  color: var(--neon-pink);
+  text-shadow: 0 0 8px var(--neon-pink);
+}
+
+/* 7️⃣ Boutons futuristes */
 button {
-  border-radius: 8px;
-  border: 1px solid transparent;
+  border-radius: 10px;
+  border: 1px solid var(--neon-primary);
   padding: 0.6em 1.2em;
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
   cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(6px);
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+button:hover {
+  border-color: var(--neon-pink);
+  box-shadow: 0 0 10px var(--neon-pink);
+  transform: scale(1.05);
+}
+
+button:focus,
+button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 12px var(--neon-primary);
+}
+
+/* 8️⃣ Texte principal glow */
+h1, h2, h3 {
+  text-shadow: 0 0 8px rgba(0, 247, 255, 0.6);
 }

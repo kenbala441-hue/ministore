@@ -1,0 +1,31 @@
+{
+  "name": "comicrafte-api",
+  "version": "1.0.0",
+  "description": "API backend pour Comicrafte Ink - gestion utilisateurs et transactions",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "comicrafte",
+    "api",
+    "express",
+    "backend",
+    "ink",
+    "transactions"
+  ],
+  "author": "Kinkarou Daiko",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^2.2.2",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "firebase-admin": "^13.7.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}

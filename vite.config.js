@@ -7,24 +7,39 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
-    strictPort: true,         // ne change pas de port si occupé
-    open: true,               // ouvre automatiquement le navigateur
+    strictPort: true,
+    open: true,
     hmr: {
-      overlay: true,          // montre les erreurs dans le navigateur
+      overlay: true,
     },
   },
-  logLevel: 'info',           // 'info', 'warn', 'error' ou 'silent'
+  logLevel: 'info',
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),  // import plus simple
+      '@': path.resolve(__dirname, './src'),
     },
   },
   build: {
-    sourcemap: true,          // permet de debugger avec DevTools
+    sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            return 'vendor'; // tout ce qui est dans node_modules → chunk séparé
+          }
+          // On peut ajouter des chunks spécifiques pour les écrans lourds
+          if (id.includes('screens/Home')) return 'home';
+          if (id.includes('screens/RegisterProfile')) return 'register';
+          if (id.includes('screens/author')) return 'author';
+          if (id.includes('screens/admin')) return 'admin';
+        },
+      },
+    },
+    chunkSizeWarningLimit: 1000, // warning seulement > 1MB
   },
   optimizeDeps: {
     esbuildOptions: {
-      logLevel: 'debug',      // affiche plus de détails pour le debug
+      logLevel: 'debug',
     },
   },
 })
