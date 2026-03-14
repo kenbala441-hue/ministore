@@ -1,52 +1,137 @@
 // src/screens/author/AuthorSubmissionScreen.jsx
 import React, { useState } from "react";
 import "./AuthorSubmissionScreen.css";
+import { db } from "../../firebase";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { useUserContext } from "../users/userContext";
 
 export default function AuthorSubmissionScreen({ setView }) {
+
+  const { user } = useUserContext();
+
   const [title, setTitle] = useState("");
   const [synopsis, setSynopsis] = useState("");
   const [chapter, setChapter] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!title || !synopsis || !chapter) return alert("Veuillez remplir tous les champs");
-    setSubmitted(true);
-    console.log("Histoire soumise:", { title, synopsis, chapter });
+
+    if (!user) {
+      alert("Utilisateur non connecté");
+      return;
+    }
+
+    if (user.role !== "author") {
+      alert("Seuls les auteurs peuvent publier");
+      return;
+    }
+
+    if (!title || !synopsis || !chapter) {
+      alert("Veuillez remplir tous les champs");
+      return;
+    }
+
+    try {
+
+      setLoading(true);
+
+      await addDoc(collection(db, "stories"), {
+        title: title,
+        synopsis: synopsis,
+        content: chapter,
+        author: user.username || "Auteur",
+        authorId: user.uid,
+        role: user.role,
+        likes: 0,
+        views: 0,
+        comments: 0,
+        chaptersCount: 1,
+        status: "published",
+        createdAt: serverTimestamp()
+      });
+
+      setTitle("");
+      setSynopsis("");
+      setChapter("");
+
+      alert("Histoire publiée avec succès");
+
+      setView("home");
+
+    } catch (error) {
+      console.error("Erreur Firestore:", error);
+      alert("Erreur lors de la publication");
+
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="container">
       <div className="card">
-        <h2 className="title">⚡ Soumettre votre histoire</h2>
+
+        <h2 className="title">Publier une histoire</h2>
 
         <form onSubmit={handleSubmit}>
-          <label className="label">Titre de l'histoire</label>
-          <input className="input" type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="Titre" />
 
-          <label className="label">Synopsis</label>
-          <textarea className="textarea" rows={5} value={synopsis} onChange={e => setSynopsis(e.target.value)} placeholder="Résumé de votre histoire..." />
+          <div className="form-group">
 
-          <label className="label">Chapitre 1</label>
-          <textarea className="textarea" rows={12} value={chapter} onChange={e => setChapter(e.target.value)} placeholder="Écrivez le chapitre ici..." />
+            <input
+              className="input"
+              type="text"
+              placeholder="Titre de l'histoire"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
 
-          <button type="submit" className="button">💜 Soumettre & Payer</button>
+            <textarea
+              className="textarea"
+              rows={4}
+              placeholder="Synopsis / Résumé"
+              value={synopsis}
+              onChange={(e) => setSynopsis(e.target.value)}
+            />
+
+            <textarea
+              className="textarea"
+              rows={10}
+              placeholder="Chapitre 1"
+              value={chapter}
+              onChange={(e) => setChapter(e.target.value)}
+            />
+
+          </div>
+
+          <button
+            type="submit"
+            className="button"
+            disabled={loading}
+          >
+            {loading ? "Publication..." : "Publier"}
+          </button>
+
         </form>
 
-        {submitted && (
-          <p style={{ textAlign: "center", marginTop: 15, color: "#00ffea", fontWeight: "bold" }}>
-            ✔ Histoire soumise avec succès !
-          </p>
-        )}
+        <div className="submission-actions">
 
-        <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
-          <button className="button-purple" onClick={() => setView("author_dashboard")}>
-            Retour au Dashboard
+          <button
+            className="button-purple"
+            onClick={() => setView("author_dashboard")}
+          >
+            Retour Dashboard
           </button>
-          <button className="button" onClick={() => setView("author_contract")}>
-            Revenir au Contrat
+
+          <button
+            className="button"
+            onClick={() => setView("home")}
+          >
+            Retour Home
           </button>
+
         </div>
+
       </div>
     </div>
   );

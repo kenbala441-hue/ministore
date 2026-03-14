@@ -11,6 +11,7 @@ import Navbar from "./components/Navbar";
 import BurgerMenu from "./components/BurgerMenu";
 import AssistantGemini from "./components/AssistantGemini"; // adapte le chemin si besoin
 import { useUser } from "./screens/users/userContext";
+import MainLayout from "./components/MainLayout";
 // 🔹 Lazy loading screens utilisateur
 const Login = lazy(() => import("./screens/Login"));
 const Terms = lazy(() => import("./screens/Terms"));
