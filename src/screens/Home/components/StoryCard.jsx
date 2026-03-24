@@ -11,13 +11,14 @@ export default function StoryCard({
   setView,
   user,
 }) {
-  // 🔹 Sécurisation globale
+  // 🔥 TON IMAGE OFFICIELLE CLOUDINARY (Placeholder)
+  const PLACEHOLDER =
+    "https://res.cloudinary.com/dn9c4ctav/image/upload/v1772147595/1751816044094_fvqghc.png";
+
+  // 🔹 Déstructuration sécurisée
   const {
     id,
     title = "Sans titre",
-    coverImage,
-    cover,
-    pages,
     description = "",
     likesCount = 0,
     commentsCount = 0,
@@ -25,28 +26,26 @@ export default function StoryCard({
     viewsCount = 0,
   } = story || {};
 
-  // 🔥 TON IMAGE OFFICIELLE CLOUDINARY
-  const PLACEHOLDER =
-    "https://res.cloudinary.com/dn9c4ctav/image/upload/v1772147595/1751816044094_fvqghc.png";
-
-  // 🔹 Gestion intelligente et robuste de l’image
+  // 🔹 LOGIQUE D'IMAGE ALIGNÉE SUR HEROSECTION (LA PLUS COMPATIBLE)
   const coverSrc = useMemo(() => {
-    const possibleImage =
-      coverImage ||
-      cover ||
-      pages?.find((p) => p?.type === "image")?.src ||
-      pages?.[0]?.src;
+    if (!story) return PLACEHOLDER;
 
-    if (
-      possibleImage &&
-      typeof possibleImage === "string" &&
-      possibleImage.startsWith("http")
-    ) {
-      return possibleImage;
-    }
+    // DEBUG: Affiche les données reçues pour chaque carte dans la console
+    console.log(`Données image pour [${title}]:`, {
+        coverImage: story.coverImage,
+        cover: story.cover,
+        firstPage: story.pages?.[0]
+    });
 
-    return PLACEHOLDER;
-  }, [coverImage, cover, pages]);
+    const img = 
+      story.coverImage ||
+      story.cover ||
+      story.pages?.find(p => p.type === 'image')?.src ||
+      story.pages?.[0]?.src || 
+      PLACEHOLDER;
+
+    return img;
+  }, [story, PLACEHOLDER]);
 
   // 🔹 Navigation
   const handleOpen = useCallback(() => {
@@ -55,62 +54,55 @@ export default function StoryCard({
     setView("reader");
   }, [story, setSelectedStory, setView]);
 
-  // 🔹 Actions sécurisées
-  const handleLike = useCallback(
-    (e) => {
-      e.stopPropagation();
-      if (!user?.uid || !id) return;
-      likeStory(user.uid, id);
-    },
-    [user, id]
-  );
+  // 🔹 Actions (Like, Comment, Share)
+  const handleLike = (e) => {
+    e.stopPropagation();
+    if (!user?.uid || !id) return;
+    likeStory(user.uid, id);
+  };
 
-  const handleComment = useCallback(
-    (e) => {
-      e.stopPropagation();
-      if (!user?.uid || !id) return;
-      const text = prompt("Ton commentaire :");
-      if (!text) return;
-      commentStory(user.uid, id, text);
-    },
-    [user, id]
-  );
+  const handleComment = (e) => {
+    e.stopPropagation();
+    if (!user?.uid || !id) return;
+    const text = prompt("Ton commentaire :");
+    if (!text) return;
+    commentStory(user.uid, id, text);
+  };
 
-  const handleShare = useCallback(
-    (e) => {
-      e.stopPropagation();
-      if (!user?.uid || !id) return;
-      shareStory(user.uid, id);
-    },
-    [user, id]
-  );
+  const handleShare = (e) => {
+    e.stopPropagation();
+    if (!user?.uid || !id) return;
+    shareStory(user.uid, id);
+  };
 
   return (
     <div
       onClick={handleOpen}
       style={{
         cursor: "pointer",
-        border: "1px solid #00fff2",
+        border: "1px solid #00fff233", // Bordure plus subtile style Apple
         borderRadius: "16px",
         background: "#111",
         overflow: "hidden",
-        transition: "0.25s ease",
+        transition: "transform 0.2s ease, box-shadow 0.2s ease",
       }}
-      onMouseEnter={(e) =>
-        (e.currentTarget.style.boxShadow = "0 0 15px #00fff288")
-      }
-      onMouseLeave={(e) =>
-        (e.currentTarget.style.boxShadow = "none")
-      }
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = "0 0 15px #00fff255";
+        e.currentTarget.style.transform = "translateY(-4px)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = "none";
+        e.currentTarget.style.transform = "translateY(0)";
+      }}
     >
-      {/* Cover */}
-      <div>
+      {/* Container Image */}
+      <div style={{ position: 'relative', height: '180px', background: '#222' }}>
         <img
           src={coverSrc}
           alt={title}
           style={{
             width: "100%",
-            height: "180px",
+            height: "100%",
             objectFit: "cover",
             display: "block",
           }}
@@ -120,54 +112,24 @@ export default function StoryCard({
         />
       </div>
 
-      {/* Content */}
+      {/* Infos Content */}
       <div style={{ padding: "12px" }}>
-        <h4
-          style={{
-            color: "#00fff2",
-            margin: "0 0 6px 0",
-            fontSize: "16px",
-          }}
-        >
+        <h4 style={{ color: "#00fff2", margin: "0 0 6px 0", fontSize: "15px", fontWeight: '600' }}>
           {title}
         </h4>
 
         {description && (
-          <p
-            style={{
-              fontSize: "12px",
-              color: "#aaa",
-              marginBottom: "8px",
-            }}
-          >
-            {description.length > 90
-              ? description.slice(0, 90) + "..."
-              : description}
+          <p style={{ fontSize: "11px", color: "#888", marginBottom: "10px", height: '32px', overflow: 'hidden' }}>
+            {description.length > 60 ? description.slice(0, 60) + "..." : description}
           </p>
         )}
 
-        {/* Stats */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            fontSize: "12px",
-            color: "#ccc",
-          }}
-        >
+        {/* Barre de Stats style Webtoon */}
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: "#aaa", borderTop: '1px solid #222', paddingTop: '8px' }}>
           <span>👁 {viewsCount}</span>
-
-          <span onClick={handleLike} style={{ cursor: "pointer" }}>
-            ❤️ {likesCount}
-          </span>
-
-          <span onClick={handleComment} style={{ cursor: "pointer" }}>
-            💬 {commentsCount}
-          </span>
-
-          <span onClick={handleShare} style={{ cursor: "pointer" }}>
-            🔗 {sharesCount}
-          </span>
+          <span onClick={handleLike} style={{ cursor: "pointer" }}>❤️ {likesCount}</span>
+          <span onClick={handleComment} style={{ cursor: "pointer" }}>💬 {commentsCount}</span>
+          <span onClick={handleShare} style={{ cursor: "pointer" }}>🔗</span>
         </div>
       </div>
     </div>

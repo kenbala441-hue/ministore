@@ -1,7 +1,19 @@
 import { motion } from "framer-motion";
 import "./AuthorIntroScreen.css";
+import { useUserContext } from "../../users/userContext";
 
 export default function AuthorIntroScreen({ setView }) {
+  const { user } = useUserContext();
+
+  const handleAccessClick = () => {
+    // Si l'utilisateur est membre studio et activé
+    if (user?.role === "studio_member" && user?.studioActivated) {
+      setView("studio_activated");
+    } else {
+      setView("author_access"); // flow normal pour les auteurs indépendants
+    }
+  };
+
   return (
     <div className="intro-container">
       <motion.div
@@ -19,14 +31,14 @@ export default function AuthorIntroScreen({ setView }) {
         <h1 className="intro-title">Vous avez du talent ?</h1>
 
         <p className="intro-text">
-          Vous êtes passionné d'histoire, vous voulez créer votre propre
-          univers ou avoir un public fidèle et gagner de l'argent en
-          monétisant votre histoire, vous êtes au bon endroit.
+          Vous êtes passionné d'histoire, vous voulez créer votre propre univers
+          ou avoir un public fidèle et gagner de l'argent en monétisant votre
+          histoire, vous êtes au bon endroit.
         </p>
 
         <div className="intro-buttons">
           <motion.button
-            onClick={() => setView("author_access")}
+            onClick={handleAccessClick}
             className="btn-primary"
             whileHover={{ scale: 1.08 }}
             whileTap={{ scale: 0.95 }}

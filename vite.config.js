@@ -1,45 +1,75 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import path from 'path'
+// vite.config.js — VERSION PRO STABLE & MOBILE SAFE
 
-// https://vitejs.dev/config/
-export default defineConfig({
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import path from "path";
+
+export default defineConfig(({ mode }) => ({
   plugins: [react()],
-  server: {
-    port: 5173,
-    strictPort: true,
-    open: true,
-    hmr: {
-      overlay: true,
-    },
-  },
-  logLevel: 'info',
+
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      "@": path.resolve(__dirname, "./src"),
     },
   },
+
+  server: {
+    host: true, // ✅ permet accès via téléphone (IP locale)
+    port: 5173,
+    strictPort: true,
+    open: false, // ❌ éviter bug mobile + navigateur auto
+
+    cors: true,
+
+    hmr: {
+      protocol: "ws",
+      host: "0.0.0.0", // ✅ FIX websocket mobile
+      port: 5173,
+      clientPort: 5173,
+      overlay: true,
+    },
+
+    watch: {
+      usePolling: true, // ✅ FIX Android / Termux
+    },
+  },
+
+  preview: {
+    host: true,
+    port: 5173,
+    strictPort: true,
+  },
+
   build: {
-    sourcemap: true,
+    sourcemap: mode !== "production",
+
+    chunkSizeWarningLimit: 1200,
+
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('node_modules')) {
-            return 'vendor'; // tout ce qui est dans node_modules → chunk séparé
+          if (id.includes("node_modules")) {
+            return "vendor";
           }
-          // On peut ajouter des chunks spécifiques pour les écrans lourds
-          if (id.includes('screens/Home')) return 'home';
-          if (id.includes('screens/RegisterProfile')) return 'register';
-          if (id.includes('screens/author')) return 'author';
-          if (id.includes('screens/admin')) return 'admin';
+
+          // 🔥 découpage intelligent
+          if (id.includes("screens/Home")) return "home";
+          if (id.includes("screens/RegisterProfile")) return "register";
+          if (id.includes("screens/author")) return "author";
+          if (id.includes("screens/admin")) return "admin";
+          if (id.includes("components")) return "components";
         },
       },
     },
-    chunkSizeWarningLimit: 1000, // warning seulement > 1MB
   },
+
   optimizeDeps: {
+    include: ["react", "react-dom", "framer-motion"],
+
     esbuildOptions: {
-      logLevel: 'debug',
+      logLevel: "silent", // 🔇 éviter spam console
     },
   },
-})
+
+  logLevel: "info",
+}));

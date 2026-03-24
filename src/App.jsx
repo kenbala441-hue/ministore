@@ -12,6 +12,29 @@ import BurgerMenu from "./components/BurgerMenu";
 import AssistantGemini from "./components/AssistantGemini"; // adapte le chemin si besoin
 import { useUser } from "./screens/users/userContext";
 import MainLayout from "./components/MainLayout";
+import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css";
+import {
+  AuthorDashboardScreen,
+  StudioDashboard,
+  AuthorAccessScreen,
+  AuthorApplyScreen,
+  AuthorIntroScreen,
+  AuthorTermsScreen,
+  AuthorSubmissionScreen,
+  AuthorContractScreen,
+  AuthorIdentityScreen
+} from "./screens/author";
+// COMPONENTS
+import Header from "./screens/Home/components/Header";
+import Tabs from "./screens/Home/components/Tabs";
+import HeroSection from "./screens/Home/components/HeroSection";
+import TrendingGrid from "./screens/Home/components/TrendingGrid";
+import TopCreator from "./screens/Home/components/TopCreator";
+import NewStory from "./screens/Home/components/NewStory";
+import NewsCard from "./screens/Home/components/NewsCard";
+import GenreScroll from "./screens/Home/components/GenreScroll";
+
+
 // 🔹 Lazy loading screens utilisateur
 const Login = lazy(() => import("./screens/Login"));
 const Terms = lazy(() => import("./screens/Terms"));
@@ -27,19 +50,11 @@ const Security2FA = lazy(() => import("./screens/Security2FA"));
 const Search = lazy(() => import("./screens/Search"));
 const Notifications = lazy(() => import("./screens/Notifications"));
 const LegalDetails = lazy(() => import("./screens/LegalDetails"));
+const About = lazy(() => import("./screens/About"));
+const Help = lazy(() => import("./screens/Help"));
 const RegisterProfile = lazy(() => import("./screens/RegisterProfile/RegisterProfile"));
 const News = lazy(() => import("./screens/News"));
 const WalletHistory = lazy(() => import("./screens/WalletHistory"));
-// 🔹 Lazy loading screens auteur
-const AuthorIntroScreen = lazy(() => import("./screens/author/AuthorIntroScreen"));
-const AuthorAccessScreen = lazy(() => import("./screens/author/AuthorAccessScreen"));
-const AuthorApplyScreen = lazy(() => import("./screens/author/AuthorApplyScreen"));
-const AuthorTermsScreen = lazy(() => import("./screens/author/AuthorTermsScreen"));
-const AuthorSubmissionScreen = lazy(() => import("./screens/author/AuthorSubmissionScreen"));
-const AuthorContractScreen = lazy(() => import("./screens/author/AuthorContractScreen"));
-const AuthorDashboardScreen = lazy(() => import("./screens/author/AuthorDashboardScreen"));
-const AuthorIdentityScreen = lazy(() => import("./screens/author/AuthorIdentityScreen"));
-
 // 🔹 Lazy loading admin
 const AdminLogin = lazy(() => import("./screens/admin/AdminLogin"));
 const AdminGuard = lazy(() => import("./screens/admin/layout/AdminGuard.jsx"));
@@ -47,57 +62,75 @@ const AdminLayout = lazy(() => import("./screens/admin/layout/AdminLayout.jsx"))
 const Overview = lazy(() => import("./screens/admin/dashboard/Overview.jsx"));
 const Profile = lazy(() => import("./screens/users/UserProfile"));
 
-
-// 🔹 Home composants
-import TrendingGrid from "./screens/Home/components/TrendingGrid";
-import NewStory from "./screens/Home/components/NewStory";
-import StoryCard from "./screens/Home/components/StoryCard";
-import Tabs from "./screens/Home/components/Tabs";
-
 function AppContent() {
   const { user, setUser } = useUserContext();
   const [authReady, setAuthReady] = useState(false);
   const [splashVisible, setSplashVisible] = useState(true);
   const [view, setView] = useState("login");
+  const [googleLoginPending, setGoogleLoginPending] = useState(false); // ✅ ici
   const [selectedStory, setSelectedStory] = useState(null);
   const [isBurgerOpen, setIsBurgerOpen] = useState(false);
   const [adminOk, setAdminOk] = useState(false);
   const [authorData, setAuthorData] = useState(null);
-const [currentStory, setCurrentStory] = useState(null);
+  const [currentStory, setCurrentStory] = useState(null);
   const userStatus = "vip";
+
+  // ... ensuite tu peux mettre ton useEffect et handleGoogleLogin
 
   // 🔹 Auth Listener principal
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (u) => {
+  const unsub = onAuthStateChanged(auth, async (u) => {
+    try {
+      // 🔹 Mise à jour du contexte utilisateur
       setUser(u || null);
       setAuthReady(true);
 
+      // 🔹 Pas connecté → écran login
       if (!u) {
         setView("login");
         return;
       }
 
-      try {
-        const userRef = doc(db, "users", u.uid);
-        const docSnap = await getDoc(userRef);
+      // 🔹 Récupération des données utilisateur
+      const userRef = doc(db, "users", u.uid);
+      const docSnap = await getDoc(userRef);
 
-        if (!docSnap.exists()) {
-          setView("register");
-          return;
-        }
-
-        const data = docSnap.data();
-        if (!data?.acceptedTerms) setView("terms");
-        else if (!data?.completedProfile) setView("register");
-        else setView("home");
-      } catch (err) {
-        console.error(err);
-        setView("home");
+      // 🔹 Compte inexistant → profil à créer
+      if (!docSnap.exists()) {
+        setView("register");
+        return;
       }
-    });
 
-    return () => unsub();
-  }, []);
+      // 🔹 Données existantes
+      const data = docSnap.data() || {};
+
+      // 🔹 Navigation sécurisée selon statut
+      if (!data.acceptedTerms) {
+        setView("terms");
+      } else if (!data.completedProfile) {
+        setView("register");
+      } else {
+        switch (data.role) {
+          case "studio_author":
+            setView("studio_dashboard");
+            break;
+          case "author":
+            setView("author_dashboard");
+            break;
+          default:
+            setView("home");
+            break;
+        }
+      }
+
+    } catch (err) {
+      console.error("Erreur auth:", err);
+      setView("home"); // fallback sécurisé
+    }
+  });
+
+  return () => unsub();
+}, []);
 
   // 🔹 Splash control
   useEffect(() => {
@@ -136,36 +169,46 @@ const [currentStory, setCurrentStory] = useState(null);
 
   // 🔹 Google login
   const handleGoogleLogin = async () => {
-    try {
-      const { user: u } = await signInWithPopup(auth, googleProvider);
-      setUser(u);
+  if (googleLoginPending) return; // Empêche plusieurs clics
+  setGoogleLoginPending(true);
 
-      const userRef = doc(db, "users", u.uid);
-      const docSnap = await getDoc(userRef);
+  try {
+    const { user: u } = await signInWithPopup(auth, googleProvider);
+    setUser(u);
 
-      if (!docSnap.exists()) {
-        await setDoc(userRef, {
-          uid: u.uid,
-          email: u.email,
-          displayName: u.displayName || "",
-          photoURL: u.photoURL || "",
-          createdAt: serverTimestamp(),
-          acceptedTerms: false,
-          completedProfile: false,
-        });
-        setView("register");
-        return;
-      }
+    const userRef = doc(db, "users", u.uid);  
+    const docSnap = await getDoc(userRef);  
 
-      const data = docSnap.data();
-      if (!data?.acceptedTerms) setView("terms");
-      else if (!data?.completedProfile) setView("register");
-      else setView("home");
-    } catch (err) {
-      console.error(err);
-      alert("Erreur Google");
+    if (!docSnap.exists()) {  
+      await setDoc(userRef, {  
+        uid: u.uid,  
+        email: u.email,  
+        displayName: u.displayName || "",  
+        photoURL: u.photoURL || "",  
+        createdAt: serverTimestamp(),  
+        acceptedTerms: false,  
+        completedProfile: false,  
+        role: "user",  
+      });  
+      setView("register");  
+    } else {  
+      const data = docSnap.data();  
+      if (!data?.acceptedTerms) setView("terms");  
+      else if (!data?.completedProfile) setView("register");  
+      else {  
+        if (data?.role === "studio_author") setView("studio_dashboard");  
+        else if (data?.role === "author") setView("author_dashboard");  
+        else setView("home");  
+      }  
     }
-  };
+
+  } catch (err) {
+    console.error("Erreur Google login :", err);
+    alert("Erreur Google login. Veuillez réessayer.");
+  } finally {
+    setGoogleLoginPending(false);
+  }
+};
 
   const pageTransition = {
     initial: { opacity: 0, x: 40 },
@@ -176,11 +219,11 @@ const [currentStory, setCurrentStory] = useState(null);
 
   if (splashVisible) return <SplashScreen finishLoading={() => setSplashVisible(false)} />;
 
-  return (
-    <div style={{ backgroundColor: "#050505", color: "white", minHeight: "100vh", position: "relative" }}>
-      <BurgerMenu
-        isOpen={isBurgerOpen}
-        close={() => setIsBurgerOpen(false)}
+    return (
+      <div style={{ backgroundColor: "#050505", color: "white", minHeight: "100vh", position: "relative" }}>
+        <BurgerMenu
+          isOpen={isBurgerOpen}
+          close={() => setIsBurgerOpen(false)}
         user={user}
         setView={setView}
       />
@@ -201,18 +244,22 @@ const [currentStory, setCurrentStory] = useState(null);
                 <RegisterProfile setView={setView} user={user} />
               )}
              
-              {view === "home" && (
-                <Home
-                  setView={setView}
-                  setSelectedStory={setSelectedStory}
-                  toggleBurger={() => setIsBurgerOpen(true)}
-                  TrendingGrid={TrendingGrid}
-                  NewStory={NewStory}
-                  StoryCard={StoryCard}
-                  Tabs={Tabs}
-                />
-              )}
+             {view === "home" && (
+  <Home
+    setView={setView}
+    setSelectedStory={setSelectedStory}
+    toggleBurger={() => setIsBurgerOpen(true)}
+  />
+)}
 
+{view === "about" && (
+  <About setView={setView} />
+)}
+
+
+             {view === "help" && (
+            <Help setView={setView} />
+            )}
               {view === "profile" && <Profile setView={setView} />}
               {view === "reader" && <Reader story={selectedStory} setView={setView} />}
               {view === "news" && <News setView={setView} setSelectedStory={setSelectedStory} />}
@@ -240,18 +287,16 @@ const [currentStory, setCurrentStory] = useState(null);
                 </>
               )}
 
-              {view === "author_intro" && <AuthorIntroScreen setView={setView} />}
-              {view === "author_terms" && <AuthorTermsScreen setView={setView} />}
-              {view === "author_submission" && <AuthorSubmissionScreen setView={setView} />}
-              {view === "author_contract" && <AuthorContractScreen setView={setView} />}
-              {view === "author_dashboard" && <AuthorDashboardScreen setView={setView} />}
-              {view === "author_access" && (
-                <AuthorAccessScreen setView={setView} setAuthorData={setAuthorData} />
-              )}
-              {view === "author_identity" && (
-                  <AuthorIdentityScreen setView={setView} />
-)}
-              {view === "author_apply" && <AuthorApplyScreen setView={setView} />}
+             {view === "author_intro" && <AuthorIntroScreen setView={setView} />}
+{view === "author_terms" && <AuthorTermsScreen setView={setView} />}
+{view === "author_submission" && <AuthorSubmissionScreen setView={setView} />}
+{view === "author_contract" && <AuthorContractScreen setView={setView} />}
+{view === "author_identity" && <AuthorIdentityScreen setView={setView} />}
+{view === "author_apply" && <AuthorApplyScreen setView={setView} />}
+{view === "author_access" && <AuthorAccessScreen setView={setView} setAuthorData={setAuthorData} />}
+{view === "author_dashboard" && <AuthorDashboardScreen setView={setView} />}
+          {view === "studio_dashboard" && <StudioDashboard setView={setView} />}
+
             </motion.div>
           </Suspense>
         </AnimatePresence>

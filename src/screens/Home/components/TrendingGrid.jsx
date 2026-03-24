@@ -1,236 +1,140 @@
-import React, { useState, useEffect, useRef } from "react";
-import { db, auth } from "../../../firebase";
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
-import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Settings, Volume2, ChevronLeft, ChevronRight, X } from "lucide-react";
+import React from "react";
+import { PUBLIC_STORIES } from "../../../data/publicStories";
+import { COMICCRAFTE_STORIES } from "../../../data/COMICCRAFTE_DATA";
 
-export default function Reader({ story, setView }) {
-  const [currentPage, setCurrentPage] = useState(0);
-  const [fontSize, setFontSize] = useState(18);
-  const [fontCase, setFontCase] = useState("normal");
-  const [showSettings, setShowSettings] = useState(false);
-  const [isNovelMode, setIsNovelMode] = useState(false);
 
-  const contentRef = useRef(null);
-  const pages = story?.pages || [];
+export default function TrendingGrid({
+  setView,
+  setSelectedStory,
+  stories = [],       // Possibilité de paser une DB personnalisée
+  type = "public",    // "public" ou "comicrafte"
+  neonColor = "#00fff2"
+}) {
+  // Choisir la source selon props ou type
+  const data =
+    stories.length > 0
+      ? stories
+      : type === "comicrafte"
+      ? COMICCRAFTE_STORIES
+      : PUBLIC_STORIES;
 
-  /* ---------------- MODE AUTO ---------------- */
-
-  useEffect(() => {
-    if (!story?.pages) return;
-
-    const textBlocks = story.pages.filter(p => p.type === "text");
-    setIsNovelMode(textBlocks.length > 3);
-  }, [story]);
-
-  /* ---------------- LOAD POSITION ---------------- */
-
-  useEffect(() => {
-    if (!story?.id || !auth.currentUser) return;
-
-    const loadPosition = async () => {
-      try {
-        const ref = doc(
-          db,
-          "users",
-          auth.currentUser.uid,
-          "readingPositions",
-          story.id
-        );
-
-        const snap = await getDoc(ref);
-
-        if (snap.exists()) {
-          const data = snap.data();
-
-          if (isNovelMode && contentRef.current) {
-            contentRef.current.scrollTop = data.scroll || 0;
-          } else {
-            setCurrentPage(data.page || 0);
-          }
-        }
-      } catch (err) {
-        console.log("Load position error:", err);
-      }
-    };
-
-    loadPosition();
-  }, [story?.id, isNovelMode]);
-
-  /* ---------------- SAVE POSITION ---------------- */
-
-  useEffect(() => {
-    if (!story?.id || !auth.currentUser) return;
-
-    const save = async () => {
-      try {
-        const payload = {
-          lastRead: serverTimestamp(),
-        };
-
-        if (isNovelMode && contentRef.current) {
-          payload.scroll = contentRef.current.scrollTop;
-        } else {
-          payload.page = currentPage;
-        }
-
-        await setDoc(
-          doc(
-            db,
-            "users",
-            auth.currentUser.uid,
-            "readingPositions",
-            story.id
-          ),
-          payload,
-          { merge: true }
-        );
-      } catch (err) {
-        console.log("Save error:", err);
-      }
-    };
-
-    save();
-  }, [currentPage, isNovelMode, story?.id]);
-
-  /* ---------------- NAVIGATION ---------------- */
-
-  const nextPage = () => {
-    if (currentPage < pages.length - 1) {
-      setCurrentPage(p => p + 1);
-    }
+  const handleOpen = (story) => {
+    setSelectedStory(story);
+    setView(story.folder ? "reader" : "story");
   };
 
-  const prevPage = () => {
-    if (currentPage > 0) {
-      setCurrentPage(p => p - 1);
-    }
-  };
+  if (!data || data.length === 0) return null;
 
-  /* ---------------- PROTECTION ---------------- */
-
-  if (!story || !story.pages) {
-    return <div style={{ padding: 20 }}>Sélectionnez une histoire...</div>;
-  }
-
-  const themeColor = "#7c3aed";
-
-  /* ---------------- RENDER ---------------- */
+  // Titre dynamique selon source
+  const sectionTitle =
+    type === "comicrafte" ? "📖 ComicCrafte Stories" : "🔥 Trending Stories";
 
   return (
-    <div style={{ background: "#020617", minHeight: "100vh", color: "white" }}>
+    <div style={{ marginTop: "30px" }}>
+      <h3 style={{ color: neonColor, marginBottom: "15px" }}>
+        {sectionTitle}
+      </h3>
 
-      {/* HEADER */}
-      <nav style={{ padding: 15, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <ArrowLeft onClick={() => setView("home")} style={{ cursor: "pointer" }} />
-        <span style={{ color: themeColor, fontWeight: "bold" }}>
-          {story.title}
-        </span>
-        <Settings onClick={() => setShowSettings(true)} style={{ cursor: "pointer" }} />
-      </nav>
-
-      {/* CONTENT */}
-      <div
-        ref={contentRef}
-        style={{
-          padding: 20,
-          overflowY: isNovelMode ? "auto" : "hidden",
-        }}
-      >
-        {isNovelMode ? (
-          pages.map((block, index) => (
-            <div key={index}>
-              {block.type === "image" && (
-                <img
-                  src={block.src}
-                  alt=""
-                  style={{ width: "100%", marginBottom: 20 }}
-                />
-              )}
-              {block.type === "text" && (
-                <p
-                  style={{
-                    fontSize: `${fontSize}px`,
-                    textTransform: fontCase,
-                    lineHeight: 1.8,
-                    marginBottom: 20,
-                  }}
-                >
-                  {block.text}
-                </p>
-              )}
-            </div>
-          ))
-        ) : (
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentPage}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              {pages[currentPage]?.type === "image" ? (
-                <img
-                  src={pages[currentPage].src}
-                  alt=""
-                  style={{ width: "100%" }}
-                />
-              ) : (
-                <p
-                  style={{
-                    fontSize: `${fontSize}px`,
-                    textTransform: fontCase,
-                    lineHeight: 1.8,
-                  }}
-                >
-                  {pages[currentPage]?.text}
-                </p>
-              )}
-            </motion.div>
-          </AnimatePresence>
-        )}
-      </div>
-
-      {/* NAVIGATION */}
-      {!isNovelMode && (
-        <div style={{ display: "flex", justifyContent: "center", gap: 20, padding: 20 }}>
-          <button onClick={prevPage} disabled={currentPage === 0}>
-            <ChevronLeft />
-          </button>
-
-          <button onClick={nextPage} disabled={currentPage === pages.length - 1}>
-            <ChevronRight />
-          </button>
-        </div>
-      )}
-
-      {/* SETTINGS */}
-      <AnimatePresence>
-        {showSettings && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            style={{
-              position: "fixed",
-              inset: 0,
-              background: "rgba(0,0,0,0.6)",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-            }}
+      <div style={s.grid}>
+        {data.map((story, index) => (
+          <div
+            key={story.id || index}
+            style={s.card}
+            onClick={() => handleOpen(story)}
           >
-            <div style={{ background: "#111", padding: 20 }}>
-              <X onClick={() => setShowSettings(false)} style={{ cursor: "pointer" }} />
-              <button onClick={() => setFontSize(f => f + 2)}>A+</button>
-              <button onClick={() => setFontSize(f => Math.max(12, f - 2))}>A-</button>
-              <button onClick={() => setFontCase(fontCase === "normal" ? "uppercase" : "normal")}>
-                Majuscules
-              </button>
+            {/* IMAGE */}
+            <div style={s.imageWrapper}>
+              <img
+                src={story.coverImage || "https://via.placeholder.com/300"}
+                alt={story.title}
+                style={s.image}
+              />
+
+              {/* BADGE TOP */}
+              {index < 3 && (
+                <div style={{ ...s.badge, background: `linear-gradient(90deg, ${neonColor}, #00bbf9)` }}>
+                  #{index + 1}
+                </div>
+              )}
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
+            {/* INFO */}
+            <div style={s.info}>
+              <h4 style={s.title}>{story.title}</h4>
+              <p style={s.author}>{story.author || "Unknown"}</p>
+              <div style={s.stats}>
+                👁 {story.viewsCount || 0} · ❤️ {story.likesCount || 0}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
+
+/* =========================
+   STYLES
+========================= */
+const s = {
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(2, 1fr)",
+    gap: "15px",
+  },
+
+  card: {
+    cursor: "pointer",
+    borderRadius: "14px",
+    overflow: "hidden",
+    background: "rgba(255,255,255,0.03)",
+    border: "1px solid #00fff233",
+    boxShadow: "0 0 10px rgba(0,255,242,0.15)",
+    transition: "0.3s",
+  },
+
+  imageWrapper: {
+    position: "relative",
+    width: "100%",
+    height: "160px",
+    overflow: "hidden",
+  },
+
+  image: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+  },
+
+  badge: {
+    position: "absolute",
+    top: "8px",
+    left: "8px",
+    padding: "3px 8px",
+    borderRadius: "6px",
+    fontSize: "11px",
+    fontWeight: "bold",
+    color: "#000",
+  },
+
+  info: {
+    padding: "10px",
+  },
+
+  title: {
+    color: "#fff",
+    fontSize: "14px",
+    marginBottom: "4px",
+  },
+
+  author: {
+    fontSize: "11px",
+    color: "#aaa",
+    marginBottom: "6px",
+  },
+
+  stats: {
+    fontSize: "11px",
+    color: "#00fff2",
+  },
+};
