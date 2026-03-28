@@ -3,7 +3,7 @@ export const COMICCRAFTE_STORIES = [
     id: "heritiers-oubli-01",
     title: "Les Héritiers de l’Oubli",
     author: "ComicCrafte Studio",
-    coverImage: "https://images.unsplash.com/photo-1614728263952-84ea256f9679?w=500",
+    coverImage: "https://res.cloudinary.com/dn9c4ctav/image/upload/v1772150811/1762552814369_tdmwse.png",
     genres: ["Dark Fantasy", "Action"],
     viewsCount: 0,
     likesCount: 0,
@@ -28,7 +28,7 @@ export const COMICCRAFTE_STORIES = [
     id: "black-hollow-01",
     title: "Black Hollow Institute",
     author: "ComicCrafte Studio",
-    coverImage: "https://images.unsplash.com/photo-1509248961158-e54f6934749c?w=800",
+    coverImage: "https://res.cloudinary.com/dn9c4ctav/image/upload/v1774629777/1774622360420_wo1vbt.png",
     genres: ["Horreur", "Thriller", "Surnaturel"],
     viewsCount: 105,
     likesCount: 42,
@@ -142,6 +142,69 @@ export const COMICCRAFTE_STORIES = [
     ]
   },
   
+  
+  {
+    id: "blackline-01",
+    title: "BLACKLINE",
+    author: "ComicCrafte Studio",
+    coverImage: "https://res.cloudinary.com/dn9c4ctav/image/upload/v1774630505/1774630494659_gzve7l.png",
+    genres: ["Roman Noir", "Thriller Urbain", "Drame"],
+    viewsCount: 0,
+    likesCount: 0,
+    isOriginal: true,
+    chapters: [
+      {
+        id: 0,
+        title: "Prologue – BLACKLINE",
+        pages: [
+          `# PROLOGUE – BLACKLINE
+          
+          Le monde est divisé. Les riches vivent dans les tours. Les pauvres s’éteignent dans la poussière.
+          
+          Moi, Noan Elric, je suis né du mauvais côté. J'avais un don pour le combat. Mais dans ce monde corrompu, le talent ne nourrit pas.
+          
+          Alors j’ai franchi la ligne. Un contrat. Une maison à frapper. Je l’ai fait.
+          
+          Et le soir même… ma sœur a été tuée. Par vengeance. Par le frère de celle que j’allais aimer sans le savoir : **Elya**.
+          
+          Fille du plus grand criminel du pays. Lumière dans mon obscurité.
+          
+          Maintenant, je vis entre l’amour et la haine, entre la justice et la vengeance. Et chaque coup que je porte… efface un peu plus l’homme que j’étais.`
+        ]
+      },
+      {
+        id: 1,
+        title: "CHAPITRE 1 – Première Erreur",
+        pages: [
+          `# CHAPITRE 1 – Première Erreur
+          
+          L’appartement sentait le café froid et l’humidité. Une odeur qui s’accrochait aux murs, aux vêtements, à la peau.
+          
+          Ma sœur, Sora, avait 21 ans. Elle rentrait tard, toujours avec cette fatigue dans les yeux. Elle bossait dans un atelier textile illégal, payé au noir. C’était tout ce qu’on avait.
+          
+          Moi, j’avais 18 ans, et rien. Rien sauf mes poings et cette rage qui ne me quittait jamais.
+          
+          ---
+          
+          Cette nuit-là, j’ai rejoint Malik, un mec du quartier qui traînait avec les **Corvax**. 
+          — T’as une bonne carrure, m’a-t-il dit. Dis-moi ce que t’as.
+          
+          Le lendemain, j'avais une mission simple : récupérer une caisse dans un entrepôt. Pas de bruit. Juste prendre et partir. J’ai cru que c’était trop simple. Je ne savais pas encore que cette caisse appartenait à un homme qu’on ne vole pas.
+          
+          ---
+          
+          Quand je suis rentré avec de la nourriture, Sora a compris. Elle n’a rien dit, mais elle savait. 
+          
+          Pendant ce temps, dans une pièce obscure, un homme aux cheveux gris fixait mon visage sur un écran de surveillance. Il a juste murmuré :
+          — Ce gosse vient de signer sa fin. Trouvez-le. Tuez-le.
+          
+          ---
+          🥀 *Fin du Chapitre 1*`
+        ] 
+      }
+    ]
+  },
+
   {
     id: "voix-minuit-01",
     title: "Les Voix de Minuit",

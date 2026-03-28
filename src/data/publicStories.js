@@ -40,28 +40,74 @@ export const PUBLIC_STORIES = [
   id: "alice-01",
   title: "Alice au pays des merveilles",
   author: "Lewis Carroll",
-  coverImage: "https://images.unsplash.com/photo-1551269901-5c5e14c25df7?w=500",
+  coverImage: "https://images.unsplash.com/photo-1504198458649-3128b932f49b?w=500",
   genres: ["fantastique"],
   viewsCount: 2200,
   likesCount: 940,
   chapters: [
     {
       id: 0,
-      title: "Chapitre 1 - Le terrier du lapin",
+      title: "Chapitre 1 - Au fond du terrier",
       pages: [
         "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800",
-        "Alice s'ennuyait profondément.",
+        "# Alice s'ennuyait profondément",
+        "Assise auprès de sa sœur sur le talus, Alice commençait à se fatiguer de ne rien faire.",
+        "Un lapin blanc passa en courant, marmonnant qu’il était en retard.",
+        "Intriguée, Alice se leva et le suivit sans réfléchir.",
         "https://images.unsplash.com/photo-1492724441997-5dc865305da7?w=800",
-        "Elle suivit un lapin blanc.",
+        "Elle entra dans un terrier et tomba dans un puits profond.",
         "Fin du chapitre"
       ]
     },
     {
       id: 1,
-      title: "Chapitre 2 - La chute",
+      title: "Chapitre 2 - La mare de larmes",
       pages: [
-        "Alice tombe dans un monde étrange.",
-        "Tout devient absurde.",
+        "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=800",
+        "# Une chute interminable",
+        "Alice tombe lentement, observant des objets étranges autour d’elle.",
+        "Elle atterrit sans se blesser et découvre une salle pleine de portes.",
+        "Après avoir bu une potion, elle change de taille plusieurs fois.",
+        "Perdue et confuse, elle pleure jusqu’à créer une mare de larmes.",
+        "Fin du chapitre"
+      ]
+    },
+    {
+      id: 2,
+      title: "Chapitre 3 - Une course étrange",
+      pages: [
+        "https://images.unsplash.com/photo-1526318472351-c75fcf070305?w=800",
+        "# Une assemblée bizarre",
+        "Alice rencontre des animaux mouillés comme elle.",
+        "Ils organisent une course absurde pour se sécher.",
+        "Tout le monde gagne, sans règle ni logique.",
+        "Alice commence à comprendre que ce monde est complètement fou.",
+        "Fin du chapitre"
+      ]
+    },
+    {
+      id: 3,
+      title: "Chapitre 4 - Le lapin envoie une petite main",
+      pages: [
+        "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=800",
+        "# Une mission étrange",
+        "Le lapin prend Alice pour sa servante et lui demande d’aller chercher des gants.",
+        "Elle entre dans une maison et grandit soudainement.",
+        "Coincée, elle doit trouver un moyen de sortir.",
+        "Des créatures tentent de la faire sortir en lançant des objets.",
+        "Fin du chapitre"
+      ]
+    },
+    {
+      id: 4,
+      title: "Chapitre 5 - Le conseil de la chenille",
+      pages: [
+        "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?w=800",
+        "# La chenille mystérieuse",
+        "Alice rencontre une chenille fumant sur un champignon.",
+        "La chenille lui pose des questions sur son identité.",
+        "Elle lui explique comment contrôler sa taille grâce au champignon.",
+        "Alice apprend à s’adapter à ce monde étrange.",
         "Fin du chapitre"
       ]
     }
