@@ -209,7 +209,7 @@ export const COMICCRAFTE_STORIES = [
     id: "voix-minuit-01",
     title: "Les Voix de Minuit",
     author: "ComicCrafte Studio",
-    coverImage: "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=500",
+    coverImage: "https://res.cloudinary.com/dn9c4ctav/image/upload/v1775589355/1775557335238_rn1sjq.png",
     genres: ["Mystère", "Horreur"],
     viewsCount: 0,
     likesCount: 0,
