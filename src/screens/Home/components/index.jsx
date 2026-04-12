@@ -15,6 +15,37 @@ import NewsCard from './NewsCard';
 
 const GENRES = ["Tous","Action","Horreur","Romance","Aventure","Sci-Fi","Drame","Comédie","Dark Romance"];
 const NEON_COLORS = ["#ff003c","#00f7ff","#ff00ff","#39ff14","#ffd300","#8f00ff"];
+// ... après le composant Section
+const Section = ({ title, children, color }) => (
+  <section style={{ marginTop: 30 }}>
+    <h3 style={{ fontSize: 14, fontWeight: "bold", textTransform: "uppercase", marginBottom: 12, color: color || "#fff" }}>
+      {title}
+    </h3>
+    {children}
+  </section>
+);
+
+// COLLES LE "const s" ICI :
+const s = {
+  verticalCard: {
+    display: 'flex',
+    gap: '12px',
+    backgroundColor: '#0f0f0f',
+    borderRadius: '10px',
+    overflow: 'hidden',
+    border: '1px solid #1a1a1a',
+    height: '110px',
+    marginBottom: '12px'
+  },
+  vThumb: { width: '80px', height: '110px', objectFit: 'cover' },
+  vDetails: { flex: 1, padding: '10px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' },
+  vHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+  vGenre: { fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' },
+  vStatus: { fontSize: '8px', background: '#a855f7', padding: '2px 6px', borderRadius: '4px', color: '#fff' },
+  vTitle: { fontSize: '16px', fontWeight: 'bold', color: '#fff' },
+  vDesc: { fontSize: '11px', color: '#666' },
+  vFooter: { display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#444' }
+};
 
 export default function Home({ setView, setSelectedStory, setSelectedUser, toggleBurger }) {
   const [stories, setStories] = useState([]);
@@ -142,7 +173,42 @@ export default function Home({ setView, setSelectedStory, setSelectedUser, toggl
           />
         </section>
       )}
+     
+           {/* --- INSERER ICI --- */}
+      
+      {/* 1. LE TOP HORIZONTAL */}
+      <Section title="🔥 TOP LECTURES" color="#FFD700">
+        <TrendingScroll 
+          setView={setView} 
+          setSelectedStory={setSelectedStory} 
+        />
+      </Section>
 
+      {/* 2. LES EXCLUSIVITÉS VERTICALES */}
+      <Section title="✨ EXCLUSIVITÉS COMICCRAFTE" color={neonColor}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', padding: '0 5px' }}>
+          {COMICCRAFTE_STORIES.map((story) => (
+            <div key={story.id} style={s.verticalCard} onClick={() => handleSelectStory(story)}>
+              <img src={story.coverImage} style={s.vThumb} alt={story.title} />
+              <div style={s.vDetails}>
+                <div style={s.vHeader}>
+                  <span style={{...s.vGenre, color: neonColor}}>{story.genres?.[0]}</span>
+                  <span style={s.vStatus}>ORIGINAL</span>
+                </div>
+                <div style={s.vTitle}>{story.title}</div>
+                <div style={s.vDesc}>Nouveauté ComicCrafte Studio</div>
+                <div style={s.vFooter}>
+                  <span>❤️ {story.likesCount || 0}</span>
+                  <span style={{ color: neonColor, fontWeight: 'bold' }}>S'ABONNER</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      {/* --- FIN DE L'INSERTION --- */}
+      
       <TopCreator 
         creators={creators} 
         setView={setView} 

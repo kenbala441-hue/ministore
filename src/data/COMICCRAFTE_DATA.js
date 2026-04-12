@@ -204,6 +204,62 @@ export const COMICCRAFTE_STORIES = [
       }
     ]
   },
+  
+  {
+    id: "shadow-quest-01",
+    title: "Shadow Quest",
+    author: "ComicCrafte Studio",
+    coverImage: "https://res.cloudinary.com/dn9c4ctav/image/upload/v1775980683151/1775980683151.jpg",
+    genres: ["action", "aventure"],
+    viewsCount: 204,
+    likesCount: 88,
+    isOriginal: true,
+    chapters: [{ id: 0, title: "Chapitre 1", pages: ["La quête commence dans l'ombre."] }]
+  },
+  {
+    id: "neon-city-01",
+    title: "Neon City",
+    author: "ComicCrafte Studio",
+    coverImage: "https://res.cloudinary.com/dn9c4ctav/image/upload/v1775980684964/1775980684964.jpg",
+    genres: ["cyberpunk", "sci-fi"],
+    viewsCount: 312,
+    likesCount: 145,
+    isOriginal: true,
+    chapters: [{ id: 0, title: "Chapitre 1", pages: ["Les lumières de la ville cachent la vérité."] }]
+  },
+  {
+    id: "dark-soul-01",
+    title: "Dark Soul",
+    author: "ComicCrafte Studio",
+    coverImage: "https://res.cloudinary.com/dn9c4ctav/image/upload/v1775980686299/1775980686299.jpg",
+    genres: ["horreur", "dark fantasy"],
+    viewsCount: 98,
+    likesCount: 41,
+    isOriginal: true,
+    chapters: [{ id: 0, title: "Chapitre 1", pages: ["L'âme est un labyrinthe sans fin."] }]
+  },
+  {
+    id: "eternal-love-01",
+    title: "Eternal Love",
+    author: "ComicCrafte Studio",
+    coverImage: "https://res.cloudinary.com/dn9c4ctav/image/upload/v1775980691936/1775980691936.jpg",
+    genres: ["romance", "drame"],
+    viewsCount: 425,
+    likesCount: 230,
+    isOriginal: true,
+    chapters: [{ id: 0, title: "Chapitre 1", pages: ["Un amour qui traverse le temps."] }]
+  },
+  {
+    id: "cyber-hunter-01",
+    title: "Cyber Hunter",
+    author: "ComicCrafte Studio",
+    coverImage: "https://res.cloudinary.com/dn9c4ctav/image/upload/v1775980694231/1775980694231.jpg",
+    genres: ["action", "sci-fi"],
+    viewsCount: 189,
+    likesCount: 76,
+    isOriginal: true,
+    chapters: [{ id: 0, title: "Chapitre 1", pages: ["La chasse est ouverte."] }]
+  },
 
   {
     id: "voix-minuit-01",

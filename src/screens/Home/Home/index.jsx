@@ -15,6 +15,9 @@ import Tabs from "../components/Tabs";
 import HeroSection from "../components/HeroSection";
 import TrendingGrid from "../components/TrendingGrid";
 import TopCreator from "../components/TopCreator";
+import ComicCrafteVertical from '../components/ComicCrafteVertical';
+import TrendingScroll from '../components/TrendingScroll';
+
 import NewStory from "../components/NewStory";
 import NewsCard from "../components/NewsCard";
 import PublicStoriesSection from "../components/PublicStoriesSection";
@@ -197,6 +200,23 @@ export default function Home({ setView, setSelectedStory, setSelectedUser, toggl
           <TrendingGrid stories={publicStories} setSelectedStory={handleSelectStory} setView={setView} getCover={getCover} neonColor={neonColor} />
         </Section>
       )}
+
+{/* 1. LE TOP HORIZONTAL */}
+<Section title="🔥 TOP LECTURES" color="#FFD700">
+  <TrendingScroll 
+    setView={setView} 
+    setSelectedStory={setSelectedStory} 
+  />
+</Section>
+
+{/* 2. LES EXCLUSIVITÉS VERTICALES (Importé) */}
+<Section title="✨ EXCLUSIVITÉS COMICCRAFTE" color={neonColor}>
+  <ComicCrafteVertical 
+    handleSelectStory={handleSelectStory} 
+    neonColor={neonColor} 
+  />
+</Section>
+
 
       <PublicStoriesSection setSelectedStory={handleSelectStory} setView={setView} neonColor={neonColor} />
 
