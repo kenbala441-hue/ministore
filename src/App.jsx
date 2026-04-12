@@ -7,6 +7,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { UserProvider, useUserContext } from "./screens/users/userContext";
 import NeonLayout from "./components/NeonLayout";
 import SplashScreen from "./components/SplashScreen";
+import Multiverse from './screens/News/News/Multiverse'; 
 import Navbar from "./components/Navbar";
 import BurgerMenu from "./components/BurgerMenu";
 import AssistantGemini from "./components/AssistantGemini"; // adapte le chemin si besoin
@@ -267,6 +268,8 @@ function AppContent() {
               {view === "store" && <Store />}
               {view === "search" && <Search setView={setView} />}
               {view === "notifications" && <Notifications setView={setView} />}
+              {view === 'multiverse' && <Multiverse setView={setView} />}
+
               {view === "legal_details" && <LegalDetails setView={setView} />}
               {view === "ink_market" && <InkMarket setView={setView} userStatus={userStatus} />}
               {view === "wallet_history" && <WalletHistory user={user} />}
