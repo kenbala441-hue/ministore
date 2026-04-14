@@ -39,7 +39,7 @@ import GenreScroll from "./screens/Home/components/GenreScroll";
 // 🔹 Lazy loading screens utilisateur
 const Login = lazy(() => import("./screens/Login"));
 const Terms = lazy(() => import("./screens/Terms"));
-const Home = lazy(() => import("./screens/Home"));
+const Home = lazy(() => import("./screens/Home/Home/index.jsx"));
 const MySeries = lazy(() => import("./screens/MySeries"));
 const Reader = lazy(() => import("./screens/Reader"));
 const Store = lazy(() => import("./screens/Store"));
@@ -323,3 +323,4 @@ export default function App() {
     </UserProvider>
   );
 }
+

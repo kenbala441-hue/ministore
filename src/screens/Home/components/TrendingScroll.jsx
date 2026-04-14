@@ -1,5 +1,5 @@
 import React from 'react';
-import { COMICCRAFTE_STORIES } from '../../../data/Action'; 
+import { COMICCRAFTE_STORIES } from "../../../data/Action"; 
 
 const TrendingScroll = ({ setView, setSelectedStory }) => {
   

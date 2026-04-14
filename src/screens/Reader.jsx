@@ -1,17 +1,14 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  ArrowLeft, Settings, ChevronLeft, ChevronRight, 
-  Layout, Play, X, Headphones, 
-  Sun, Moon, Coffee, Zap, MousePointer2, Bookmark, Download,
-  Menu, List, Volume2, VolumeX, Eye, BookOpen, Share2
+  ArrowLeft, Settings, ChevronLeft, ChevronRight, X, Bookmark, Download, 
+  Coffee, Eye, BookOpen, Share2 
 } from "lucide-react";
-import { COMICCRAFTE_STORIES } from "../data/COMICCRAFTE_DATA";
 
-/**
- * COMPOSANT READER PRO - COMICCRAFTE STUDIO
- * Version : 3.0.0 (Fusion Intégrale)
- */
+import { COMICCRAFTE_STORIES as storiesGeneral } from "../data/COMICCRAFTE_DATA";
+import { COMICCRAFTE_STORIES as storiesAction } from "../data/Action"; 
+import { SettingsMenu } from "./components/SettingsMenu";
+
 export default function Reader({ story, setView }) {
   // ================== ÉTATS (STATE) ==================
   const [chapterIndex, setChapterIndex] = useState(0);
@@ -22,15 +19,7 @@ export default function Reader({ story, setView }) {
   const [autoScroll, setAutoScroll] = useState(false);
   const [showChapters, setShowChapters] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
-
-  // 🔊 AUDIO / SPEECH
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [voices, setVoices] = useState([]);
-  const [selectedVoice, setSelectedVoice] = useState(null);
-
-  const scrollRef = useRef(null);
-  const autoScrollInterval = useRef(null);
-
+const scrollRef = useRef(null);
   // ================== THÈMES (CONFIG) ==================
   const themes = {
     dark: { bg: "#0a0a0c", paper: "#121214", text: "#e2e8f0", accent: "#00f7ff", border: "#1f2937", shadow: "rgba(0,0,0,0.5)" },
@@ -40,131 +29,284 @@ export default function Reader({ story, setView }) {
   };
   const currentTheme = themes[theme];
 
-  // ================== GESTION DES DONNÉES ==================
-  const isOfflineStory = story?.isOffline;
+// ================== GESTION DES DONNÉES (PRO) ==================
 
-  const storyData = useMemo(() => {
-    if (isOfflineStory) return story; 
-    return COMICCRAFTE_STORIES.find((s) => s.id === story?.id) || story || {};
-  }, [story, isOfflineStory]);
+// Sécurité de base
+const safeStory = story || {};
 
-  const chapters = useMemo(() => {
-    return storyData?.content || storyData?.chapters || [];
-  }, [storyData]);
+// Vérifie si offline
+const isOfflineStory = Boolean(safeStory?.isOffline);
 
-  const currentChapter = chapters[chapterIndex] || { pages: [], title: `Chapitre ${chapterIndex + 1}` };
-  const pages = currentChapter.pages || [];
+// Fusion intelligente des sources
+const storyData = useMemo(() => {
+  if (!safeStory?.id) return {};
 
-  // ================== SYSTÈME AUDIO (TTS) ==================
-  useEffect(() => {
-    const loadVoices = () => {
-      const v = speechSynthesis.getVoices();
-      const frVoices = v.filter(voice => voice.lang.includes("fr"));
-      setVoices(frVoices.length > 0 ? frVoices : v);
-      if (v.length > 0) setSelectedVoice(frVoices[0] || v[0]);
-    };
-    loadVoices();
-    if (speechSynthesis.onvoiceschanged !== undefined) {
-      speechSynthesis.onvoiceschanged = loadVoices;
-    }
-    return () => speechSynthesis.cancel();
-  }, []);
+  if (isOfflineStory) return safeStory;
 
-  const handleSpeak = () => {
-    if (isSpeaking) {
-      speechSynthesis.cancel();
-      setIsSpeaking(false);
-      return;
-    }
-    const textToRead = pages.join(". ");
-    const utterance = new SpeechSynthesisUtterance(textToRead);
-    if (selectedVoice) utterance.voice = selectedVoice;
-    utterance.rate = 0.95;
-    utterance.onend = () => setIsSpeaking(false);
-    speechSynthesis.speak(utterance);
-    setIsSpeaking(true);
+  const allStories = [...(storiesAction || []), ...(storiesGeneral || [])];
+
+  return allStories.find(s => s.id === safeStory.id) || safeStory;
+
+}, [safeStory, isOfflineStory]);
+
+// Normalisation des chapitres (ULTRA IMPORTANT)
+const chapters = useMemo(() => {
+  if (!storyData) return [];
+
+  // Si déjà format chapitres
+  if (Array.isArray(storyData.chapters)) {
+    return storyData.chapters;
+  }
+
+  // Si format content (ancien)
+  if (Array.isArray(storyData.content)) {
+    return storyData.content.map((item, index) => ({
+      title: item.title || `Chapitre ${index + 1}`,
+      pages: item.pages || item || []
+    }));
+  }
+
+  return [];
+
+}, [storyData]);
+
+// Sécurisation index (évite crash)
+const safeChapterIndex = Math.min(
+  Math.max(chapterIndex, 0),
+  chapters.length - 1
+);
+
+// Chapitre actuel sécurisé
+const currentChapter = chapters[safeChapterIndex] || {
+  title: "Chapitre 1",
+  pages: []
+};
+
+// Pages toujours propre
+const pages = Array.isArray(currentChapter.pages)
+  ? currentChapter.pages
+  : [];
+
+// ================== PERSISTENCE (RÉCENTS & FAVORIS) ==================
+
+useEffect(() => {
+  if (!storyData?.id) return;
+
+  let recent = [];
+  try {
+    recent = JSON.parse(localStorage.getItem("comicrafte_recent")) || [];
+  } catch {
+    recent = [];
+  }
+
+  const newEntry = {
+    id: storyData.id,
+    title: storyData.title || "Sans titre",
+    image: storyData.cover || storyData.img || "",
+    chapter: `Ch. ${chapterIndex + 1}`,
+    type: storyData.type || "Manga",
+    timestamp: Date.now()
   };
 
-  // ================== PERSISTENCE (RÉCENTS & FAVORIS) ==================
-  useEffect(() => {
-    if (storyData.id) {
-      const recent = JSON.parse(localStorage.getItem("comicrafte_recent")) || [];
-      const updated = [{ 
-        id: storyData.id, 
-        title: storyData.title, 
-        image: storyData.cover || storyData.img, 
-        chapter: `Ch. ${chapterIndex + 1}`,
+  const updated = [
+    newEntry,
+    ...recent.filter(r => r.id !== storyData.id)
+  ].slice(0, 20);
+
+  try {
+    localStorage.setItem("comicrafte_recent", JSON.stringify(updated));
+  } catch (e) {
+    console.error("Erreur stockage récents:", e);
+  }
+
+}, [storyData?.id, chapterIndex]);
+
+
+// ================== SYNC FAVORIS ==================
+useEffect(() => {
+  if (!storyData?.id) return;
+
+  let favorites = [];
+  try {
+    favorites = JSON.parse(localStorage.getItem("comicrafte_favorites")) || [];
+  } catch {
+    favorites = [];
+  }
+
+  setIsSaved(favorites.some(f => f.id === storyData.id));
+
+}, [storyData?.id]);
+
+
+// ================== TOGGLE FAVORIS ==================
+const handleToggleSave = () => {
+  if (!storyData?.id) return;
+
+  let favorites = [];
+  try {
+    favorites = JSON.parse(localStorage.getItem("comicrafte_favorites")) || [];
+  } catch {
+    favorites = [];
+  }
+
+  const exists = favorites.some(f => f.id === storyData.id);
+
+  let updated;
+
+  if (exists) {
+    updated = favorites.filter(f => f.id !== storyData.id);
+  } else {
+    updated = [
+      {
+        id: storyData.id,
+        title: storyData.title || "Sans titre",
+        image: storyData.cover || storyData.img || "",
         type: storyData.type || "Manga",
-        timestamp: Date.now() 
-      }, ...recent.filter(r => r.id !== storyData.id)].slice(0, 20);
-      localStorage.setItem("comicrafte_recent", JSON.stringify(updated));
+        addedAt: Date.now()
+      },
+      ...favorites
+    ];
+  }
+
+  try {
+    localStorage.setItem("comicrafte_favorites", JSON.stringify(updated));
+  } catch (e) {
+    console.error("Erreur stockage favoris:", e);
+  }
+
+  setIsSaved(!exists);
+};
+
+// ================== DOWNLOAD (OFFLINE PRO) ==================
+const saveForOffline = () => {
+  if (!storyData?.id) return;
+
+  const KEY = "comicrafte_downloads_v2";
+
+  let downloads = [];
+  try {
+    downloads = JSON.parse(localStorage.getItem(KEY)) || [];
+  } catch {
+    downloads = [];
+  }
+
+  // 🔒 Vérifie si déjà téléchargé
+  const exists = downloads.some(item => item.id === storyData.id);
+  if (exists) {
+    alert("📥 Déjà téléchargé.");
+    return;
+  }
+
+  // 🧹 Nettoyage + normalisation des chapitres
+  const cleanChapters = (chapters || []).map((ch, index) => ({
+    title: ch.title || `Chapitre ${index + 1}`,
+    pages: (ch.pages || []).map(p => {
+      if (typeof p === "string") return p;
+      if (p?.content) return p.content;
+      return "";
+    }).filter(Boolean) // supprime vide
+  }));
+
+  // 📦 Objet final optimisé
+  const newDownload = {
+    id: storyData.id,
+    title: storyData.title || "Sans titre",
+    image: storyData.cover || storyData.img || "",
+    type: storyData.type || "Manga",
+    isOffline: true,
+    downloadedAt: Date.now(),
+    chapters: cleanChapters
+  };
+
+  const updated = [newDownload, ...downloads];
+
+  try {
+    localStorage.setItem(KEY, JSON.stringify(updated));
+    alert("✅ Téléchargé pour lecture hors ligne !");
+  } catch (e) {
+    console.error("Erreur stockage offline:", e);
+    alert("❌ Erreur de stockage.");
+  }
+};
+// ================== LOGIQUE DE NAVIGATION (PRO) ==================
+
+// 🔁 Auto-scroll fluide avec requestAnimationFrame (meilleur que setInterval)
+useEffect(() => {
+  let animationFrame;
+
+  const scrollStep = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop += 0.5; // vitesse ultra fluide
+      animationFrame = requestAnimationFrame(scrollStep);
     }
-  }, [storyData.id, chapterIndex]);
-
-  useEffect(() => {
-    const favorites = JSON.parse(localStorage.getItem("comicrafte_favorites")) || [];
-    setIsSaved(!!favorites.find(f => f.id === storyData.id));
-  }, [storyData.id]);
-
-  const handleToggleSave = () => {
-    const favorites = JSON.parse(localStorage.getItem("comicrafte_favorites")) || [];
-    const isAlreadyFavorite = favorites.find(f => f.id === storyData.id);
-    let newFavs = isAlreadyFavorite 
-      ? favorites.filter(f => f.id !== storyData.id)
-      : [...favorites, { id: storyData.id, title: storyData.title, image: storyData.cover || storyData.img, type: storyData.type || "Manga" }];
-    
-    localStorage.setItem("comicrafte_favorites", JSON.stringify(newFavs));
-    setIsSaved(!isAlreadyFavorite);
   };
 
-  // ================== DOWNLOAD (OFFLINE V2) ==================
-  const saveForOffline = () => {
-    try {
-      const KEY = "comicrafte_downloads_v2";
-      let downloads = JSON.parse(localStorage.getItem(KEY)) || [];
-      if (downloads.some(item => item.id === storyData.id)) return alert("📥 Déjà dans vos téléchargements.");
+  if (autoScroll) {
+    animationFrame = requestAnimationFrame(scrollStep);
+  }
 
-      const cleanChapters = chapters.map(ch => ({
-        ...ch,
-        pages: (ch.pages || []).map(p => typeof p === "string" ? p : p?.content || "")
-      }));
-
-      const newDownload = {
-        id: storyData.id, title: storyData.title, image: storyData.cover || storyData.img || "",
-        isOffline: true, downloadedAt: Date.now(), chapters: cleanChapters
-      };
-
-      localStorage.setItem(KEY, JSON.stringify([...downloads, newDownload]));
-      alert("✅ Histoire disponible hors-ligne !");
-    } catch (e) { alert("❌ Erreur de stockage."); }
+  return () => {
+    if (animationFrame) cancelAnimationFrame(animationFrame);
   };
+}, [autoScroll]);
 
-  // ================== LOGIQUE DE NAVIGATION ==================
-  useEffect(() => {
-    if (autoScroll) {
-      autoScrollInterval.current = setInterval(() => {
-        if (scrollRef.current) scrollRef.current.scrollTop += 1;
-      }, 40);
-    } else clearInterval(autoScrollInterval.current);
-    return () => clearInterval(autoScrollInterval.current);
-  }, [autoScroll]);
 
-  const renderPageContent = (contentArray) => {
-    return contentArray.map((item, i) => {
-      if (typeof item === "string" && (item.startsWith('http') || item.startsWith('data:image'))) {
-        return (
-          <motion.img initial={{ opacity: 0 }} animate={{ opacity: 1 }} key={i} src={item} alt="" 
-            style={{ width: "100%", display: "block", marginBottom: isWebtoonMode ? "0" : "20px", borderRadius: isWebtoonMode ? "0" : "8px" }} />
-        );
-      }
-      return (
-        <p key={i} style={{ fontSize: `${fontSize}px`, lineHeight: "1.8", marginBottom: "25px", textAlign: "justify", padding: isWebtoonMode ? "0 20px" : "0" }}>
-          {item}
-        </p>
-      );
+// 🔝 Scroll automatique en haut quand on change de chapitre
+useEffect(() => {
+  if (scrollRef.current) {
+    scrollRef.current.scrollTo({
+      top: 0,
+      behavior: "smooth"
     });
-  };
+  }
+}, [chapterIndex]);
 
+
+// 🧠 Rendu intelligent (optimisé + sécurisé)
+const renderPageContent = (contentArray = []) => {
+  return contentArray.map((item, i) => {
+    
+    // 🖼️ IMAGE (webtoon style optimisé)
+    if (typeof item === "string" && (item.startsWith("http") || item.startsWith("data:image"))) {
+      return (
+        <motion.img
+          key={`img-${i}`}
+          src={item}
+          alt={`page-${i}`}
+          loading="lazy" // 🔥 optimisation performance
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4 }}
+          style={{
+            width: "100%",
+            display: "block",
+            marginBottom: isWebtoonMode ? "0" : "20px",
+            borderRadius: isWebtoonMode ? "0" : "10px",
+            objectFit: "cover"
+          }}
+        />
+      );
+    }
+
+    // 📝 TEXTE (lecture optimisée)
+    return (
+      <p
+        key={`txt-${i}`}
+        style={{
+          fontSize: `${fontSize}px`,
+          lineHeight: "1.9",
+          marginBottom: "22px",
+          textAlign: "justify",
+          padding: isWebtoonMode ? "0 18px" : "0",
+          letterSpacing: "0.2px",
+          wordBreak: "break-word"
+        }}
+      >
+        {item || ""}
+      </p>
+    );
+  });
+};
   // ================== RENDU UI (JSX) ==================
   return (
     <div style={{ ...s.container, background: currentTheme.bg, color: currentTheme.text }}>
@@ -210,74 +352,69 @@ export default function Reader({ story, setView }) {
         </div>
       </main>
 
-      {/* --- MENU DES RÉGLAGES (ANIMÉ) --- */}
-      <AnimatePresence>
-        {showSettings && (
-          <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 50 }} style={s.settingsOverlay}>
-            <div style={{ ...s.settingsCard, background: currentTheme.paper, borderColor: currentTheme.border }}>
-              <div style={s.settingRow}>
-                <span style={s.label}>Mode de lecture</span>
-                <div style={s.toggleGroup}>
-                  <button onClick={() => setIsWebtoonMode(false)} style={!isWebtoonMode ? s.activeBtn : s.inactiveBtn}><BookOpen size={16}/> Classique</button>
-                  <button onClick={() => setIsWebtoonMode(true)} style={isWebtoonMode ? s.activeBtn : s.inactiveBtn}><Layout size={16}/> Webtoon</button>
-                </div>
-              </div>
+      {/* --- LE NOUVEAU MENU DES RÉGLAGES (Ultra complet) --- */}
+      <SettingsMenu 
+        isOpen={showSettings} 
+        onClose={() => setShowSettings(false)} 
+        settings={{ 
+          theme, 
+          fontSize, 
+          isWebtoonMode, 
+          autoScroll, 
+        }} 
+        setSettings={{ 
+          setTheme, 
+          setFontSize, 
+          setIsWebtoonMode, 
+          setAutoScroll, 
+        }} 
+      />
 
-              <div style={s.settingRow}>
-                <span style={s.label}>Thèmes d'affichage</span>
-                <div style={s.toggleGroup}>
-                  {Object.keys(themes).map(t => (
-                    <button key={t} onClick={() => setTheme(t)} style={theme === t ? { ...s.themeBtn, border: `2px solid ${currentTheme.accent}` } : s.themeBtn}>
-                       <div style={{ width: 15, height: 15, borderRadius: "50%", background: themes[t].bg, border: "1px solid #555" }} />
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div style={s.settingRow}>
-                <span style={s.label}>Outils Intelligents</span>
-                <div style={s.toggleGroup}>
-                  <button onClick={handleSpeak} style={{ ...s.toolBtn, color: isSpeaking ? currentTheme.accent : "#fff" }}>
-                    {isSpeaking ? <VolumeX size={18}/> : <Volume2 size={18}/>} Audio
-                  </button>
-                  <button onClick={() => setAutoScroll(!autoScroll)} style={{ ...s.toolBtn, color: autoScroll ? currentTheme.accent : "#fff" }}>
-                    <MousePointer2 size={18}/> Scroll
-                  </button>
-                </div>
-              </div>
-
-              <div style={s.settingRow}>
-                <span style={s.label}>Taille du texte</span>
-                <div style={s.sizeControls}>
-                  <button onClick={() => setFontSize(f => Math.max(12, f-2))} style={s.sizeBtn}>A-</button>
-                  <span style={s.sizeVal}>{fontSize}px</span>
-                  <button onClick={() => setFontSize(f => Math.min(32, f+2))} style={s.sizeBtn}>A+</button>
-                </div>
-              </div>
-
-              <button onClick={() => setShowSettings(false)} style={s.closeSettingsBtn}>Fermer les réglages</button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* --- DRAWER DES CHAPITRES (LATÉRAL) --- */}
+      {/* --- LE DRAWER DES CHAPITRES (Pour changer d'histoire facilement) --- */}
       <AnimatePresence>
         {showChapters && (
           <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowChapters(false)} style={s.drawerBackdrop} />
-            <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", damping: 25 }} style={{ ...s.drawer, background: currentTheme.paper }}>
+            {/* Fond sombre cliquable pour fermer */}
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              onClick={() => setShowChapters(false)} 
+              style={s.drawerBackdrop} 
+            />
+            
+            {/* Panneau latéral des chapitres */}
+            <motion.div 
+              initial={{ x: "100%" }} 
+              animate={{ x: 0 }} 
+              exit={{ x: "100%" }} 
+              transition={{ type: "spring", damping: 25 }} 
+              style={{ ...s.drawer, background: currentTheme.paper }}
+            >
               <div style={{ ...s.drawerHeader, borderBottom: `1px solid ${currentTheme.border}` }}>
-                <h3>Chapitres</h3>
+                <h3 style={{ margin: 0 }}>Chapitres</h3>
                 <X onClick={() => setShowChapters(false)} style={s.pointer} />
               </div>
+
               <div style={s.drawerList}>
                 {chapters.map((ch, i) => (
-                  <div key={i} onClick={() => { setChapterIndex(i); setShowChapters(false); scrollRef.current.scrollTo(0,0); }}
-                    style={{ ...s.chapterItem, background: i === chapterIndex ? currentTheme.accent + "22" : "transparent", color: i === chapterIndex ? currentTheme.accent : "inherit" }}>
+                  <motion.div 
+                    whileTap={{ scale: 0.98 }}
+                    key={i} 
+                    onClick={() => { 
+                      setChapterIndex(i); 
+                      setShowChapters(false); 
+                      scrollRef.current.scrollTo(0, 0); 
+                    }}
+                    style={{ 
+                      ...s.chapterItem, 
+                      background: i === chapterIndex ? currentTheme.accent + "22" : "transparent", 
+                      color: i === chapterIndex ? currentTheme.accent : "inherit" 
+                    }}
+                  >
                     <span style={s.chNum}>{i + 1}</span>
                     <span style={s.chLabel}>{ch.title || `Chapitre ${i + 1}`}</span>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </motion.div>
@@ -287,41 +424,22 @@ export default function Reader({ story, setView }) {
     </div>
   );
 }
-
-// ================== STYLES COMPLETS (OBJECT-BASED) ==================
 const s = {
   container: { height: "100vh", display: "flex", flexDirection: "column", overflow: "hidden", fontFamily: "'Inter', sans-serif" },
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 18px", zIndex: 100 },
   headerTitle: { textAlign: "center", cursor: "pointer" },
-  storyTitle: { fontWeight: "900", fontSize: "11px", display: "flex", alignItems: "center", gap: 5, justifyContent: "center", textTransform: "uppercase", letterSpacing: "1px" },
+  storyTitle: { fontWeight: "900", fontSize: "11px", display: "flex", alignItems: "center", gap: 5, justifyContent: "center", textTransform: "uppercase" },
   chTitle: { fontSize: "13px", fontWeight: "500", opacity: 0.7 },
   main: { flex: 1, overflowY: "auto", scrollBehavior: "smooth" },
-  contentWrapper: { margin: "0 auto", transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)", borderRadius: "0 0 15px 15px" },
-  iconBtn: { background: "none", border: "none", color: "inherit", cursor: "pointer", padding: "6px", borderRadius: "50%", display: "flex", alignItems: "center" },
-  nextBtn: { width: "calc(100% - 40px)", margin: "40px 20px 20px", padding: "18px", borderRadius: "16px", border: "none", fontWeight: "900", color: "#000", display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", cursor: "pointer", fontSize: "16px" },
-  endMessage: { textAlign: "center", padding: "60px 20px", opacity: 0.4, fontSize: "14px", fontStyle: "italic" },
-  
-  // Settings Styles
-  settingsOverlay: { position: "fixed", top: 0, left: 0, width: "100%", height: "100%", zIndex: 200, display: "flex", alignItems: "flex-end", background: "rgba(0,0,0,0.6)" },
-  settingsCard: { width: "100%", borderTopLeftRadius: "25px", borderTopRightRadius: "25px", padding: "25px", border: "1px solid", display: "flex", flexDirection: "column", gap: "20px" },
-  settingRow: { display: "flex", flexDirection: "column", gap: "10px" },
-  label: { fontSize: "12px", textTransform: "uppercase", fontWeight: "700", opacity: 0.5, letterSpacing: "1px" },
-  toggleGroup: { display: "flex", gap: "10px", background: "rgba(0,0,0,0.2)", padding: "5px", borderRadius: "12px" },
-  activeBtn: { flex: 1, background: "#fff", color: "#000", border: "none", padding: "10px", borderRadius: "8px", fontWeight: "700", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", fontSize: "13px" },
-  inactiveBtn: { flex: 1, background: "none", color: "#888", border: "none", padding: "10px", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", fontSize: "13px" },
-  themeBtn: { padding: "10px", borderRadius: "10px", background: "rgba(255,255,255,0.05)", border: "1px solid transparent", cursor: "pointer" },
-  toolBtn: { flex: 1, background: "rgba(255,255,255,0.05)", border: "none", padding: "12px", borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", fontWeight: "600" },
-  sizeControls: { display: "flex", alignItems: "center", gap: "20px" },
-  sizeBtn: { width: "45px", height: "45px", borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.1)", color: "#fff", fontSize: "18px", cursor: "pointer" },
-  sizeVal: { fontSize: "18px", fontWeight: "800", minWidth: "50px", textAlign: "center" },
-  closeSettingsBtn: { marginTop: "10px", padding: "15px", borderRadius: "12px", border: "none", background: "#333", color: "#fff", fontWeight: "700" },
-
-  // Drawer Styles
+  contentWrapper: { margin: "0 auto", transition: "all 0.4s ease" },
+  iconBtn: { background: "none", border: "none", color: "inherit", cursor: "pointer", padding: "6px", display: "flex", alignItems: "center" },
+  nextBtn: { width: "calc(100% - 40px)", margin: "40px 20px 20px", padding: "18px", borderRadius: "16px", border: "none", fontWeight: "900", cursor: "pointer" },
+  endMessage: { textAlign: "center", padding: "60px 20px", opacity: 0.4 },
   drawerBackdrop: { position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.7)", zIndex: 250 },
-  drawer: { position: "fixed", right: 0, top: 0, width: "85%", maxWidth: "350px", height: "100%", zIndex: 260, boxShadow: "-10px 0 50px rgba(0,0,0,0.8)", display: "flex", flexDirection: "column" },
+  drawer: { position: "fixed", right: 0, top: 0, width: "85%", maxWidth: "350px", height: "100%", zIndex: 260, display: "flex", flexDirection: "column", boxShadow: "-10px 0 50px rgba(0,0,0,0.8)" },
   drawerHeader: { padding: "20px", display: "flex", justifyContent: "space-between", alignItems: "center" },
   drawerList: { flex: 1, overflowY: "auto", padding: "10px" },
-  chapterItem: { display: "flex", alignItems: "center", gap: "15px", padding: "15px", borderRadius: "12px", marginBottom: "8px", cursor: "pointer" },
+  chapterItem: { display: "flex", alignItems: "center", gap: "15px", padding: "15px", borderRadius: "12px", marginBottom: "8px", cursor: "pointer", transition: "0.2s" },
   chNum: { fontSize: "18px", fontWeight: "900", opacity: 0.2 },
   chLabel: { fontWeight: "600", fontSize: "15px" },
   pointer: { cursor: "pointer" }

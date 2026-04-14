@@ -1,6 +1,6 @@
 import React from "react";
 import { PUBLIC_STORIES } from "../../../data/publicStories";
-import { COMICCRAFTE_STORIES } from "../../../data/COMICCRAFTE_DATA";
+import { COMICCRAFTE_STORIES } from "../../../data/Action";
 
 export default function TrendingGrid({
   setView,
