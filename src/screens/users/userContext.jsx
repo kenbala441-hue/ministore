@@ -1,77 +1,76 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { auth } from "../../firebase/index.js";
+import { auth, db } from "../../firebase/index.js";
 import { onAuthStateChanged, signOut } from "firebase/auth";
+import { doc, onSnapshot, setDoc, updateDoc, increment, getDoc } from "firebase/firestore";
 
 const UserContext = createContext(null);
 
 export const UserProvider = ({ children }) => {
-
   const [user, setUser] = useState(null);
+  const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // 🔹 Connexion automatique Firebase
   useEffect(() => {
-
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-
+    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         setUser(firebaseUser);
+        const userDocRef = doc(db, "users", firebaseUser.uid);
+
+        // 1. LOGIQUE BANQUE : UNE SEULE FOIS AU LOGIN
+        try {
+          const docSnap = await getDoc(userDocRef);
+          const today = new Date().toDateString();
+
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            // Bonus journalier de 5 Inks pour le Studio ComicCrafte
+            if (data.lastCheckIn !== today) {
+              await updateDoc(userDocRef, {
+                inks: increment(5),
+                lastCheckIn: today
+              });
+            }
+          } else {
+            // Création du profil Jordan M.G. / Kinkarou Daiko si nouveau
+            await setDoc(userDocRef, {
+              uid: firebaseUser.uid,
+              username: firebaseUser.displayName || "Membre CC",
+              photoURL: firebaseUser.photoURL || "",
+              inks: 100, // Cadeau de bienvenue
+              role: "standard",
+              lastCheckIn: today,
+              createdAt: new Date().toISOString()
+            });
+          }
+        } catch (err) {
+          console.error("Erreur Banque Firestore:", err);
+        }
+
+        // 2. ÉCOUTEUR SANS ÉCRITURE (POUR ÉVITER LES BUGS)
+        const unsubscribeData = onSnapshot(userDocRef, (snap) => {
+          if (snap.exists()) setUserData(snap.data());
+          setLoading(false);
+        });
+
+        return () => unsubscribeData();
       } else {
         setUser(null);
+        setUserData(null);
+        setLoading(false);
       }
-
-      setLoading(false);
-
     });
 
-    return () => unsubscribe();
-
+    return () => unsubscribeAuth();
   }, []);
 
-  // 🔹 Logout propre
-  const logout = async () => {
-
-    try {
-      await signOut(auth);
-      setUser(null);
-    } catch (err) {
-      console.error("Erreur logout :", err);
-    }
-
-  };
-
-  const value = {
-    user,
-    setUser,
-    logout,
-    loading
-  };
+  const logout = () => signOut(auth);
 
   return (
-    <UserContext.Provider value={value}>
-      {children}
+    <UserContext.Provider value={{ user, userData, logout, loading, setUser }}>
+      {!loading && children}
     </UserContext.Provider>
   );
 };
 
-
-// Hook principal
-export const useUserContext = () => {
-
-  const context = useContext(UserContext);
-
-  if (!context) {
-    throw new Error(
-      "useUserContext doit être utilisé dans un UserProvider"
-    );
-  }
-
-  return context;
-
-};
-
-
-// ✅ Alias pour compatibilité avec les anciens fichiers
-export const useUser = () => {
-  return useUserContext();
-};
+export const useUserContext = () => useContext(UserContext);
+export const useUser = () => useUserContext();

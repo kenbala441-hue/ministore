@@ -1,135 +1,131 @@
-import React, { useMemo, useCallback } from "react";
-import {
-  likeStory,
-  commentStory,
-  shareStory,
-} from "../../../utils/firebaseActions";
+import React, { useMemo } from "react";
 
-export default function StoryCard({
-  story,
-  setSelectedStory,
-  setView,
-  user,
-}) {
-  // 🔥 TON IMAGE OFFICIELLE CLOUDINARY (Placeholder)
-  const PLACEHOLDER =
-    "https://res.cloudinary.com/dn9c4ctav/image/upload/v1772147595/1751816044094_fvqghc.png";
+/**
+ * STORYCARD VERSION PRO (GRID COMPATIBLE)
+ * Adaptée pour TrendingGrid (3 colonnes)
+ */
+export default function StoryCard({ story, setSelectedStory, setView, index, type }) {
+  const PLACEHOLDER = "https://res.cloudinary.com/dn9c4ctav/image/upload/v1772147595/1751816044094_fvqghc.png";
+  const neonColor = "#00f7ff";
 
-  // 🔹 Déstructuration sécurisée
-  const {
-    id,
-    title = "Sans titre",
-    description = "",
-    likesCount = 0,
-    commentsCount = 0,
-    sharesCount = 0,
-    viewsCount = 0,
-  } = story || {};
+  const { title = "Projet...", viewsCount = 0, likesCount = 0 } = story || {};
 
-  // 🔹 LOGIQUE D'IMAGE ALIGNÉE SUR HEROSECTION (LA PLUS COMPATIBLE)
   const coverSrc = useMemo(() => {
     if (!story) return PLACEHOLDER;
-
-    // DEBUG: Affiche les données reçues pour chaque carte dans la console
-    console.log(`Données image pour [${title}]:`, {
-        coverImage: story.coverImage,
-        cover: story.cover,
-        firstPage: story.pages?.[0]
-    });
-
-    const img = 
-      story.coverImage ||
-      story.cover ||
-      story.pages?.find(p => p.type === 'image')?.src ||
-      story.pages?.[0]?.src || 
-      PLACEHOLDER;
-
-    return img;
-  }, [story, PLACEHOLDER]);
-
-  // 🔹 Navigation
-  const handleOpen = useCallback(() => {
-    if (!story) return;
-    setSelectedStory(story);
-    setView("reader");
-  }, [story, setSelectedStory, setView]);
-
-  // 🔹 Actions (Like, Comment, Share)
-  const handleLike = (e) => {
-    e.stopPropagation();
-    if (!user?.uid || !id) return;
-    likeStory(user.uid, id);
-  };
-
-  const handleComment = (e) => {
-    e.stopPropagation();
-    if (!user?.uid || !id) return;
-    const text = prompt("Ton commentaire :");
-    if (!text) return;
-    commentStory(user.uid, id, text);
-  };
-
-  const handleShare = (e) => {
-    e.stopPropagation();
-    if (!user?.uid || !id) return;
-    shareStory(user.uid, id);
-  };
+    return story.coverImage || story.cover || story.pages?.[0]?.src || PLACEHOLDER;
+  }, [story]);
 
   return (
     <div
-      onClick={handleOpen}
-      style={{
+      onClick={() => { 
+        setSelectedStory(story); 
+        setView("reader");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }}
+      style={{ 
+        display: "flex", 
+        flexDirection: "column", 
+        minWidth: 0, // CRUCIAL: Empêche le texte de casser la grille
         cursor: "pointer",
-        border: "1px solid #00fff233", // Bordure plus subtile style Apple
-        borderRadius: "16px",
-        background: "#111",
-        overflow: "hidden",
-        transition: "transform 0.2s ease, box-shadow 0.2s ease",
+        transition: "transform 0.2s ease"
       }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = "0 0 15px #00fff255";
-        e.currentTarget.style.transform = "translateY(-4px)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = "none";
-        e.currentTarget.style.transform = "translateY(0)";
-      }}
+      className="story-card-item"
     >
-      {/* Container Image */}
-      <div style={{ position: 'relative', height: '180px', background: '#222' }}>
+      {/* BOX IMAGE - RATIO 2/3 FIXE */}
+      <div style={{
+        position: "relative",
+        width: "100%",
+        aspectRatio: "2 / 3",
+        borderRadius: "12px",
+        overflow: "hidden",
+        backgroundColor: "#0d0d0d",
+        border: "1px solid rgba(255,255,255,0.08)",
+        boxShadow: "0 4px 15px rgba(0,0,0,0.4)"
+      }}>
         <img
           src={coverSrc}
           alt={title}
+          loading="lazy"
           style={{
             width: "100%",
             height: "100%",
             objectFit: "cover",
-            display: "block",
+            display: "block"
           }}
-          onError={(e) => {
-            e.currentTarget.src = PLACEHOLDER;
-          }}
+          onError={(e) => { e.currentTarget.src = PLACEHOLDER; }}
         />
+
+        {/* BADGE CLASSEMENT (Si passé en props) */}
+        {index < 3 && (
+          <div style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            background: `linear-gradient(135deg, ${neonColor}, #8f00ff)`,
+            color: "#000",
+            fontSize: "10px",
+            fontWeight: "900",
+            padding: "3px 8px",
+            borderBottomRightRadius: "10px",
+            zIndex: 2,
+            fontStyle: "italic"
+          }}>
+            #{index + 1}
+          </div>
+        )}
+
+        {/* BADGE ORIGINAL */}
+        {(story?.isOriginal || type === "comicrafte") && (
+          <div style={{
+            position: "absolute",
+            bottom: "6px",
+            right: "6px",
+            background: "rgba(0,0,0,0.85)",
+            backdropFilter: "blur(4px)",
+            color: "#fff",
+            fontSize: "7px",
+            fontWeight: "800",
+            padding: "2px 5px",
+            borderRadius: "4px",
+            border: `0.5px solid ${neonColor}`
+          }}>
+            CC ORIGINAL
+          </div>
+        )}
       </div>
 
-      {/* Infos Content */}
-      <div style={{ padding: "12px" }}>
-        <h4 style={{ color: "#00fff2", margin: "0 0 6px 0", fontSize: "15px", fontWeight: '600' }}>
+      {/* INFOS TEXTE */}
+      <div style={{ marginTop: "8px", width: "100%", padding: "0 2px" }}>
+        <h4 style={{
+          color: "#fff",
+          fontSize: "11px",
+          fontWeight: "700",
+          margin: 0,
+          lineHeight: "1.2",
+          display: "-webkit-box",
+          WebkitLineClamp: 2, // Coupe proprement à 2 lignes
+          WebkitBoxOrient: "vertical",
+          overflow: "hidden",
+          textOverflow: "ellipsis"
+        }}>
           {title}
         </h4>
 
-        {description && (
-          <p style={{ fontSize: "11px", color: "#888", marginBottom: "10px", height: '32px', overflow: 'hidden' }}>
-            {description.length > 60 ? description.slice(0, 60) + "..." : description}
-          </p>
-        )}
-
-        {/* Barre de Stats style Webtoon */}
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: "#aaa", borderTop: '1px solid #222', paddingTop: '8px' }}>
-          <span>👁 {viewsCount}</span>
-          <span onClick={handleLike} style={{ cursor: "pointer" }}>❤️ {likesCount}</span>
-          <span onClick={handleComment} style={{ cursor: "pointer" }}>💬 {commentsCount}</span>
-          <span onClick={handleShare} style={{ cursor: "pointer" }}>🔗</span>
+        <div style={{ 
+          display: "flex", 
+          alignItems: "center", 
+          gap: "8px", 
+          marginTop: "4px",
+          fontSize: "9px",
+          fontWeight: "800",
+          opacity: 0.8
+        }}>
+          <span style={{ color: neonColor, display: "flex", alignItems: "center", gap: "2px" }}>
+            👁 {viewsCount}
+          </span>
+          <span style={{ color: "#ff0055", display: "flex", alignItems: "center", gap: "2px" }}>
+            ❤️ {likesCount}
+          </span>
         </div>
       </div>
     </div>

@@ -1,0 +1,22 @@
+/* L'arrière-plan qui floute tout derrière */
+.hub-container-fixed {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center; /* Centre verticalement */
+  justify-content: center; /* Centre horizontalement */
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px); /* Flou discret pour l'immersion */
+  z-index: 9999;
+}
+
+/* La carte minuscule au milieu */
+.hub-card-mini {
+  width: 280px; /* Taille fixe très compacte */
+  background: #0d0d0d;
+  border: 1px solid #00f7ff33; /* Bordure néon discrète */
+  border-radius: 16px;
+  padding: 0;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 247, 255, 0.1);
+}

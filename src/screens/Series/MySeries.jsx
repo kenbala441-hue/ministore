@@ -8,6 +8,7 @@ import {
   Unlock, Loader2, Settings, ChevronRight, X
 } from "lucide-react";
 import { COMICCRAFTE_STORIES } from "../../data/COMICCRAFTE_DATA";
+import { FABLES_DATABASE } from "../../data/fablesDatabase.js"; 
 
 export default function MySeries({
   setView,
@@ -117,48 +118,64 @@ export default function MySeries({
             ) : (
               <div style={s.grid}>
 
-                {displayList.map(item => {
-                  const globalInfo = COMICCRAFTE_STORIES.find(s => s.id === item.id);
-                  const cover = item.image || globalInfo?.cover;
+      {displayList.map((item) => {
+                  // 1. Recherche sécurisée dans les deux bases (insensible à la casse)
+                  const globalInfo = 
+                    COMICCRAFTE_STORIES.find(s => s.id?.toLowerCase() === item.id?.toLowerCase()) || 
+                    FABLES_DATABASE.find(s => s.id?.toLowerCase() === item.id?.toLowerCase());
+
+                  // 2. Priorité d'image : coverImage (Fables) > cover (Ancien) > image stockée
+                  const cover = 
+                    globalInfo?.coverImage || 
+                    globalInfo?.cover || 
+                    item.image || 
+                    "https://via.placeholder.com/150x200?text=No+Cover";
 
                   return (
                     <div key={item.id} style={s.card}>
 
-                      {/* IMAGE */}
+                      {/* IMAGE : FORMAT WEBTOON */}
                       <div style={s.imageWrapper} onClick={() => openReader(item)}>
-                        <img src={cover} style={s.image} />
+                        <img 
+                          src={cover} 
+                          style={s.image} 
+                          alt={item.title}
+                          onError={(e) => { e.target.src = "https://via.placeholder.com/150x200?text=Error"; }}
+                        />
 
+                        {/* INDICATEURS OFFLINE / DOWNLOAD */}
                         {activeTab === "TÉLÉCHARGEMENTS" && (
-                          item.id === downloadingId ? (
-                            <div style={s.downloading}>
-                              <Loader2 size={16} />
-                            </div>
-                          ) : (
-                            <div style={s.badge}>OFFLINE</div>
-                          )
+                          <div style={s.statusOverlay}>
+                            {item.id === downloadingId ? (
+                              <div style={s.downloading}>
+                                <Loader2 size={18} color="#00f7ff" className="animate-spin" />
+                              </div>
+                            ) : (
+                              <div style={s.badge}>OFFLINE</div>
+                            )}
+                          </div>
                         )}
                       </div>
 
-                      {/* INFO */}
+                      {/* SECTION INFOS */}
                       <div style={s.info} onClick={() => openReader(item)}>
-                        <div style={s.title}>{item.title}</div>
+                        <div style={s.title}>{item.title || globalInfo?.title}</div>
                         <div style={s.subtitle}>
-                          {item.chapter || "Ch.1"} • {item.type || "Story"}
+                          {item.chapter || "Ch. 1"} • {globalInfo?.category || globalInfo?.type || "Histoire"}
                         </div>
                         <div style={s.continue}>
-                          Continuer <ChevronRight size={12} />
+                          Continuer <ChevronRight size={14} />
                         </div>
                       </div>
 
-                      {/* DELETE */}
+                      {/* BOUTON SUPPRIMER */}
                       <button style={s.deleteBtn} onClick={() => handleDelete(item)}>
-                        <Trash2 size={16} />
+                        <Trash2 size={18} color="#333" />
                       </button>
 
                     </div>
                   );
                 })}
-
               </div>
             )}
 
@@ -166,7 +183,7 @@ export default function MySeries({
         </AnimatePresence>
       </div>
 
-      {/* UNDO SYSTEM */}
+      {/* SYSTÈME D'ANNULATION (UNDO) */}
       <AnimatePresence>
         {showUndo && (
           <motion.div
@@ -176,147 +193,198 @@ export default function MySeries({
             style={s.undoBar}
           >
             <span>Supprimé</span>
-            <button onClick={handleUndo}>Annuler</button>
+            <button 
+              onClick={handleUndo} 
+              style={{ background: 'none', border: 'none', color: '#000', fontWeight: 'bold', cursor: 'pointer' }}
+            >
+              Annuler
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
-
     </div>
   );
 }
 
+// TON OBJET CONST S COMMENCE ICI...
 const s = {
   container: {
     height: "100vh",
-    background: "#050505",
+    background: "#050505", // Noir profond pour faire ressortir les couleurs
     color: "#fff",
     display: "flex",
-    flexDirection: "column"
+    flexDirection: "column",
+    fontFamily: "'Inter', sans-serif"
   },
 
   header: {
     display: "flex",
     justifyContent: "space-between",
-    padding: "20px"
+    alignItems: "center",
+    padding: "20px",
+    background: "rgba(5, 5, 5, 0.8)",
+    backdropFilter: "blur(10px)",
+    position: "sticky",
+    top: 0,
+    zIndex: 10
   },
 
   headerTitle: {
-    fontSize: "20px",
-    fontWeight: "900"
+    fontSize: "22px",
+    fontWeight: "800",
+    letterSpacing: "-0.5px"
   },
 
   headerIcons: {
     display: "flex",
-    gap: "10px"
+    gap: "12px"
   },
 
   iconBtn: {
-    background: "#111",
-    border: "none",
+    background: "rgba(255, 255, 255, 0.05)",
+    border: "1px solid rgba(255, 255, 255, 0.1)",
     padding: "10px",
-    borderRadius: "10px"
+    borderRadius: "12px",
+    color: "#fff",
+    cursor: "pointer",
+    transition: "all 0.2s ease"
   },
 
   tabContainer: {
     display: "flex",
-    borderBottom: "1px solid #111"
+    gap: "20px",
+    padding: "0 20px",
+    borderBottom: "1px solid #1a1a1c",
+    overflowX: "auto"
   },
 
   tab: {
-    padding: "10px",
-    fontSize: "10px",
-    cursor: "pointer"
+    padding: "12px 5px",
+    fontSize: "11px",
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: "1px",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+    transition: "all 0.3s ease",
+    whiteSpace: "nowrap"
   },
 
   content: {
     flex: 1,
-    overflowY: "auto"
+    overflowY: "auto",
+    padding: "15px"
   },
 
   grid: {
-    display: "grid",
-    gridTemplateColumns: "1fr",
-    gap: "10px",
-    padding: "10px"
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px"
   },
 
   card: {
     display: "flex",
-    gap: "10px",
-    background: "#0d0d0f",
-    padding: "10px",
-    borderRadius: "15px"
+    alignItems: "center",
+    gap: "15px",
+    background: "#111113", 
+    borderRadius: "14px",
+    overflow: "hidden",
+    border: "1px solid #1a1a1c",
+    height: "110px", // Hauteur parfaite pour le format Webtoon
+    transition: "transform 0.2s ease",
+    cursor: "pointer"
   },
 
   imageWrapper: {
-    position: "relative"
+    position: "relative",
+    height: "100%",
+    width: "85px", // Largeur fixe style catalogue Webtoon
+    flexShrink: 0
   },
 
   image: {
-    width: "70px",
-    height: "90px",
-    borderRadius: "10px",
+    width: "100%",
+    height: "100%",
     objectFit: "cover"
   },
 
-  badge: {
-    position: "absolute",
-    bottom: 0,
-    right: 0,
-    background: "#00f7ff",
-    color: "#000",
-    fontSize: "8px",
-    padding: "2px"
-  },
-
-  downloading: {
+  statusOverlay: {
     position: "absolute",
     inset: 0,
-    background: "rgba(0,0,0,0.7)",
+    background: "linear-gradient(to top, rgba(0,0,0,0.6), transparent)",
     display: "flex",
-    alignItems: "center",
-    justifyContent: "center"
+    alignItems: "flex-end",
+    padding: "5px"
+  },
+
+  badge: {
+    background: "#00f7ff",
+    color: "#000",
+    fontSize: "9px",
+    fontWeight: "900",
+    padding: "2px 6px",
+    borderRadius: "4px",
+    boxShadow: "0 2px 10px rgba(0, 247, 255, 0.3)"
   },
 
   info: {
-    flex: 1
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center"
   },
 
   title: {
-    fontSize: "14px",
-    fontWeight: "bold"
+    fontSize: "15px",
+    fontWeight: "700",
+    color: "#fff",
+    marginBottom: "4px",
+    display: "-webkit-box",
+    WebkitLineClamp: 1,
+    WebkitBoxOrient: "vertical",
+    overflow: "hidden"
   },
 
   subtitle: {
-    fontSize: "10px",
-    color: "#666"
+    fontSize: "12px",
+    color: "#666",
+    marginBottom: "8px"
   },
 
   continue: {
     color: "#00f7ff",
-    fontSize: "11px"
+    fontSize: "12px",
+    fontWeight: "700",
+    display: "flex",
+    alignItems: "center",
+    gap: "4px"
   },
 
   deleteBtn: {
     background: "none",
-    border: "none"
-  },
-
-  emptyState: {
-    textAlign: "center",
-    marginTop: "50px",
-    color: "#555"
+    border: "none",
+    padding: "15px",
+    opacity: 0.3,
+    transition: "opacity 0.2s ease",
+    cursor: "pointer"
   },
 
   undoBar: {
     position: "fixed",
-    bottom: 20,
+    bottom: 30,
     left: "50%",
     transform: "translateX(-50%)",
-    background: "#111",
-    padding: "10px 20px",
-    borderRadius: "20px",
+    background: "#00f7ff",
+    color: "#000",
+    padding: "12px 25px",
+    borderRadius: "30px",
     display: "flex",
-    gap: "10px"
+    alignItems: "center",
+    gap: "15px",
+    fontWeight: "bold",
+    boxShadow: "0 10px 30px rgba(0, 247, 255, 0.4)",
+    zIndex: 100
   }
 };

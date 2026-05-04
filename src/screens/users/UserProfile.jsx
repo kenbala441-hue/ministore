@@ -1,511 +1,264 @@
-// src/screens/users/UserProfile.jsx
-// 🔥 USER PROFILE ULTRA PRO — V7 + V8 FUSION (corrigé, upload résumable + snapshot + persistance)
-import React, { useState, useEffect, useMemo, useRef } from "react";
-import {
-  doc,
-  onSnapshot,
-  getDoc,
-  updateDoc,
-  serverTimestamp,
-} from "firebase/firestore";
+import React, { useState, useMemo, useRef } from "react";
+import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db, storage } from "../../firebase/index.js";
-import {
-  ref as storageRef,
-  uploadBytesResumable,
-  getDownloadURL,
-} from "firebase/storage";
-import NeonButton from "../../components/NeonButton";
+import { ref as storageRef, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { Camera, LogOut, Award, PenTool, Shield, Wallet, ChevronRight, AlertCircle } from "lucide-react";
 import { useUserContext } from "./userContext";
+import { payForProfileUpdate } from "../../services/bankService"; // Import du service banque
 
-const DEFAULT_PROFILE =
-  "https://res.cloudinary.com/dn9c4ctav/image/upload/v1772147595/1751816044094_fvqghc.png";
-
+const DEFAULT_PROFILE = "https://res.cloudinary.com/dn9c4ctav/image/upload/v1772147595/1751816044094_fvqghc.png";
 const NEON_COLORS = ["#ff003c", "#00f7ff", "#ff00ff", "#39ff14", "#ffd300", "#8f00ff"];
-const THEMES = { dark: "#050508", light: "#f4f4f8" };
 
-/**
- * UserProfile component
- * - écoute en temps réel le document user via onSnapshot (persistance)
- * - upload d'avatar via uploadBytesResumable (progress + reprise)
- * - compression + crop centré sur le canvas (carré 300x300)
- * - sauvegarde du photoURL dans Firestore (persistant entre écrans)
- * - interface minimale compatible avec ton style néon
- */
 export default function UserProfile({ setView }) {
-  const { user, setUser } = useUserContext();
+  const { user, userData, logout } = useUserContext();
 
-  // UI states
+  // --- ÉTATS ---
   const [editing, setEditing] = useState(false);
   const [pseudo, setPseudo] = useState("");
-  const [darkMode, setDarkMode] = useState(true);
-
-  // account states
-  const [subscriptionEnd, setSubscriptionEnd] = useState(null);
-  const [role, setRole] = useState("standard");
-  const [followers, setFollowers] = useState(0);
-  const [following, setFollowing] = useState(0);
-  const [nbStories, setNbStories] = useState(0);
-  const [ink, setInk] = useState(0);
-
-  // avatar
-  const [avatarPreview, setAvatarPreview] = useState(null); // object url while selecting
-  const [uploadProgress, setUploadProgress] = useState(null); // 0..100 or null
-
-  // meta lists
-  const [badges, setBadges] = useState([]);
-  const [likedStories, setLikedStories] = useState([]);
-  const [sharedStories, setSharedStories] = useState([]);
+  const [uploadProgress, setUploadProgress] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const inputRef = useRef(null);
-  const neonColor = useMemo(
-    () => NEON_COLORS[Math.floor(Math.random() * NEON_COLORS.length)],
-    []
-  );
+  const neonColor = useMemo(() => NEON_COLORS[Math.floor(Math.random() * NEON_COLORS.length)], []);
 
+  // --- CONFIG RÔLES ---
   const roleConfig = {
-    admin: { color: "#ff4dff", label: "ADMIN" },
-    vip: { color: "#ffd700", label: "VIP" },
-    premium: { color: "#00f5ff", label: "PREMIUM" },
-    merchant: { color: "#22c55e", label: "COMMERÇANT" },
-    author: { color: "#ff6a00", label: "AUTEUR" },
-    standard: { color: "#a855f7", label: "STANDARD" },
+    admin: { color: "#ff4dff", label: "ADMIN", icon: <Shield size={14} /> },
+    vip: { color: "#ffd700", label: "VIP", icon: <Award size={14} /> },
+    author: { color: "#ff6a00", label: "AUTEUR", icon: <PenTool size={14} /> },
+    standard: { color: "#00f7ff", label: "MEMBRE", icon: <Award size={14} /> },
   };
+  const currentRole = roleConfig[userData?.role] || roleConfig.standard;
 
-  const currentRole = roleConfig[role] || roleConfig.standard;
-
-  // CLEANUP preview objectURL on unmount / change
-  useEffect(() => {
-    return () => {
-      if (avatarPreview) URL.revokeObjectURL(avatarPreview);
-    };
-  }, [avatarPreview]);
-
-  // -------------------------
-  // Real-time listener for the user's document so photoURL/pseudo stay persisted
-  // -------------------------
-  useEffect(() => {
-    if (!user?.uid) return;
-    const userDocRef = doc(db, "users", user.uid);
-
-    const unsubscribe = onSnapshot(
-      userDocRef,
-      (snap) => {
-        if (!snap.exists()) return;
-        const data = snap.data();
-
-        // merge into context safely (preserve other context fields)
-        setUser((prev) => ({ ...(prev || {}), ...data }));
-
-        // local states
-        setPseudo(data.pseudo || "");
-        setRole(data.role || "standard");
-        setFollowers(data.followersCount || 0);
-        setFollowing(data.followingCount || 0);
-        setNbStories(data.storiesCount || 0);
-        setInk(data.ink || 0);
-        setBadges(data.badges || []);
-        setLikedStories(data.likedStories || []);
-        setSharedStories(data.sharedStories || []);
-        setSubscriptionEnd(data.subscriptionEnd ? new Date(data.subscriptionEnd) : null);
-      },
-      (err) => {
-        console.error("onSnapshot user error:", err);
-      }
-    );
-
-    return () => unsubscribe();
-  }, [user?.uid, setUser]);
-
-  // -------------------------
-  // Subscription expiry verification (in case DB changed)
-  // -------------------------
-  useEffect(() => {
-    if (!subscriptionEnd || !user?.uid) return;
-    const now = new Date();
-    if (now > subscriptionEnd) {
-      setRole("standard");
-      setSubscriptionEnd(null);
-      updateDoc(doc(db, "users", user.uid), { role: "standard", subscriptionEnd: null }).catch(
-        (e) => console.error("Erreur update expiry:", e)
-      );
-    }
-  }, [subscriptionEnd, user?.uid]);
-
-  // -------------------------
-  // Pseudo save
-  // -------------------------
-  const savePseudo = async () => {
-    if (!user?.uid) return;
-    try {
-      await updateDoc(doc(db, "users", user.uid), { pseudo });
-      setUser((prev) => ({ ...(prev || {}), pseudo }));
-      setEditing(false);
-    } catch (err) {
-      console.error("Erreur sauvegarde pseudo:", err);
-    }
-  };
-
-  // -------------------------
-  // Activate subscription (1 month)
-  // -------------------------
-  const activateOffer = async (type) => {
-    if (!user?.uid) return;
-    try {
-      const endDate = new Date();
-      endDate.setMonth(endDate.getMonth() + 1);
-      setRole(type);
-      setSubscriptionEnd(endDate);
-      await updateDoc(doc(db, "users", user.uid), {
-        role: type,
-        subscriptionEnd: endDate.toISOString(),
-      });
-    } catch (err) {
-      console.error("Erreur activation offre:", err);
-    }
-  };
-
-  // -------------------------
-  // Image compression + crop center -> returns File
-  // -------------------------
-  const compressImage = (file, size = 300, quality = 0.85) =>
+  // --- COMPRESSION V8 ---
+  const compressImage = (file, size = 400, quality = 0.8) =>
     new Promise((resolve, reject) => {
-      try {
-        const img = new Image();
-        const url = URL.createObjectURL(file);
-        img.onload = () => {
-          const canvas = document.createElement("canvas");
-          canvas.width = size;
-          canvas.height = size;
-          const ctx = canvas.getContext("2d");
-
-          // center-crop square
-          const minSide = Math.min(img.width, img.height);
-          ctx.drawImage(
-            img,
-            (img.width - minSide) / 2,
-            (img.height - minSide) / 2,
-            minSide,
-            minSide,
-            0,
-            0,
-            size,
-            size
-          );
-
-          canvas.toBlob(
-            (blob) => {
-              if (!blob) return reject(new Error("Compression failed"));
-              const f = new File([blob], "avatar.jpg", { type: "image/jpeg" });
-              resolve(f);
-              URL.revokeObjectURL(url);
-            },
-            "image/jpeg",
-            quality
-          );
-        };
-        img.onerror = (e) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = size; canvas.height = size;
+        const ctx = canvas.getContext("2d");
+        const minSide = Math.min(img.width, img.height);
+        ctx.drawImage(img, (img.width - minSide) / 2, (img.height - minSide) / 2, minSide, minSide, 0, 0, size, size);
+        canvas.toBlob((blob) => {
+          resolve(new File([blob], "avatar.jpg", { type: "image/jpeg" }));
           URL.revokeObjectURL(url);
-          reject(e);
-        };
-        img.src = url;
-      } catch (e) {
-        reject(e);
-      }
+        }, "image/jpeg", quality);
+      };
+      img.onerror = reject;
+      img.src = url;
     });
 
-  // -------------------------
-  // Upload avatar with progress & resumable upload
-  // - persists final downloadURL in Firestore
-  // - updates user context after success
-  // -------------------------
+  // --- LOGIQUE DE PAIEMENT & UPLOAD (FUSIONNÉE) ---
   const handleAvatarChange = async (e) => {
-    if (!user?.uid) return;
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !user?.uid) return;
 
-    // basic client-side validation
-    const maxMb = 5;
-    if (!file.type.startsWith("image/")) {
-      return alert("Veuillez choisir une image valide.");
-    }
-    if (file.size > maxMb * 1024 * 1024) {
-      return alert(`Image trop lourde (max ${maxMb}MB).`);
+    // 1. Message de confirmation
+    const confirmPay = window.confirm(
+      `💎 SYSTEM BANQUE :\n\nModifier votre photo coûte 50 Inks.\nVoulez-vous dépenser 50 Inks pour cette action ?`
+    );
+    if (!confirmPay) return;
+
+    // 2. Vérification rapide côté client (avant upload pour gagner du temps)
+    if (userData.inks < 50) {
+      alert("❌ SOLDE INSUFFISANT\n\nIl vous manque des Inks. Gagnez-en via vos tâches quotidiennes ou passez à la boutique !");
+      return;
     }
 
-    // preview immediately
-    const previewUrl = URL.createObjectURL(file);
-    setAvatarPreview(previewUrl);
+    setIsProcessing(true);
+    setAvatarPreview(URL.createObjectURL(file)); // Prévisualisation immédiate
 
     try {
-      // compress + crop
-      const compressed = await compressImage(file, 400, 0.8);
-
-      // storage path with timestamp to avoid caching collisions
+      // 3. Compression
+      const compressed = await compressImage(file);
+      
+      // 4. Upload vers Firebase Storage avec Progression
       const path = `avatars/${user.uid}/${Date.now()}.jpg`;
       const sRef = storageRef(storage, path);
       const uploadTask = uploadBytesResumable(sRef, compressed);
 
-      setUploadProgress(0);
-
-      // handle progress & completion
-      uploadTask.on(
-        "state_changed",
-        (snapshot) => {
-          const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+      uploadTask.on("state_changed", 
+        (snap) => {
+          const progress = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
           setUploadProgress(progress);
         },
-        (error) => {
-          console.error("upload error:", error);
-          setUploadProgress(null);
-          // keep preview but don't clear it — user can retry
-        },
+        (err) => { throw err; },
         async () => {
-          try {
-            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
 
-            // save URL to Firestore (persistant)
-            await updateDoc(doc(db, "users", user.uid), {
-              photoURL: downloadURL,
-              photoUpdatedAt: serverTimestamp(),
-            });
+          // 5. Transaction Finale (Paiement + Update DB)
+          const result = await payForProfileUpdate(user.uid, downloadURL);
 
-            // update local context
-            setUser((prev) => ({ ...(prev || {}), photoURL: downloadURL }));
-
-            // cleanup preview & progress
-            setAvatarPreview(null);
-            setUploadProgress(null);
-          } catch (err) {
-            console.error("Erreur finalisation upload:", err);
-            setUploadProgress(null);
+          if (result.success) {
+            alert("✅ SUCCÈS\n\nVotre profil a été mis à jour. 50 Inks ont été prélevés par la Banque.");
+          } else {
+            alert(`⚠️ BANQUE :\n\n${result.message}`);
           }
+          
+          setUploadProgress(null);
+          setAvatarPreview(null);
+          setIsProcessing(false);
         }
       );
     } catch (err) {
-      console.error("Erreur handleAvatarChange:", err);
+      console.error(err);
+      alert("❌ ERREUR\n\nUne erreur est survenue lors de la transaction. Contactez le support si vos Inks ont été débités.");
+      setAvatarPreview(null);
+      setIsProcessing(false);
       setUploadProgress(null);
     }
   };
 
-  // -------------------------
-  // Buy theme using local ink (synchronous client-side check + DB update)
-  // -------------------------
-  const buyTheme = async () => {
-    if (!user?.uid) return;
-    if (ink < 50) return alert("Pas assez de Ink");
+  const savePseudo = async () => {
+    if (!pseudo || pseudo === userData.username) return setEditing(false);
     try {
-      const newInk = ink - 50;
-      await updateDoc(doc(db, "users", user.uid), { ink: newInk });
-      setInk(newInk);
-      setDarkMode((d) => !d);
-    } catch (err) {
-      console.error("Erreur achat thème:", err);
-    }
+      await updateDoc(doc(db, "users", user.uid), { username: pseudo });
+      setEditing(false);
+    } catch (err) { alert("Erreur lors du changement de pseudo"); }
   };
 
-  // -------------------------
-  // Navigation helpers
-  // -------------------------
-  const openAuthorPanel = () => {
-    if (role === "author" || role === "admin") {
-      setView("author_dashboard");
-    } else if (window.confirm("Votre grade ne permet pas cette fonction. Voulez-vous devenir Auteur ?")) {
-      setView("author_apply");
-    }
-  };
+  if (!userData) return <div style={styles.loader}>Initialisation du Studio...</div>;
 
-  const openAdminPanel = () => {
-    if (role === "admin") setView("admin");
-    else alert("Votre grade ne correspond pas pour accéder à l'administration.");
-  };
-
-  const daysLeft = subscriptionEnd
-    ? Math.max(0, Math.ceil((subscriptionEnd - new Date()) / (1000 * 60 * 60 * 24)))
-    : null;
-
-  // -------------------------
-  // Render
-  // -------------------------
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        padding: "25px",
-        fontFamily: "Inter, system-ui, sans-serif",
-        background: darkMode
-          ? `radial-gradient(circle at 50% 0%, ${neonColor}22, ${THEMES.dark} 80%)`
-          : THEMES.light,
-        color: darkMode ? "#fff" : "#111",
-        transition: "0.3s",
-      }}
-    >
-      {/* Header / Avatar */}
-      <div style={{ textAlign: "center", marginBottom: 30 }}>
-        <label htmlFor="avatarInput" style={{ position: "relative", cursor: "pointer", display: "inline-block" }}>
-          <img
-            src={avatarPreview || user?.photoURL || DEFAULT_PROFILE}
-            alt="avatar"
-            style={{
-              width: 110,
-              height: 110,
-              borderRadius: "50%",
-              border: `3px solid ${currentRole.color}`,
-              boxShadow: `0 0 25px ${currentRole.color}`,
-              objectFit: "cover",
-              transition: "transform .18s ease, box-shadow .18s ease",
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.transform = "scale(1.08)";
-              e.currentTarget.style.boxShadow = `0 0 40px ${currentRole.color}`;
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.transform = "scale(1)";
-              e.currentTarget.style.boxShadow = `0 0 25px ${currentRole.color}`;
-            }}
+    <div style={styles.page}>
+      {/* SECTION HEADER / BANNIÈRE */}
+      <div style={{...styles.cover, background: `linear-gradient(to bottom, ${neonColor}55, #050505)`}}>
+        <button onClick={() => setView("home")} style={styles.backBtn}>← Retour</button>
+      </div>
+
+      {/* CARTE PROFIL */}
+      <div style={styles.profileSection}>
+        <div style={styles.avatarWrapper}>
+          <img 
+            src={avatarPreview || userData.photoURL || DEFAULT_PROFILE} 
+            style={{...styles.avatar, borderColor: isProcessing ? '#555' : currentRole.color}} 
+            alt="Profil" 
           />
-        </label>
-
-        <input
-          ref={inputRef}
-          id="avatarInput"
-          type="file"
-          accept="image/*"
-          hidden
-          onChange={handleAvatarChange}
-        />
-
-        <div style={{ fontSize: 11, marginTop: 8 }}>Modifier la photo</div>
-
-        {uploadProgress !== null && (
-          <div style={{ width: 160, margin: "8px auto 0", textAlign: "center" }}>
-            <div style={{ height: 8, background: "#222", borderRadius: 8, overflow: "hidden" }}>
-              <div style={{ width: `${uploadProgress}%`, height: "100%", background: neonColor }} />
+          <label style={{...styles.uploadBtn, backgroundColor: isProcessing ? '#333' : currentRole.color}}>
+            <Camera size={18} color="#000" />
+            <input 
+              type="file" 
+              hidden 
+              accept="image/*" 
+              onChange={handleAvatarChange} 
+              disabled={isProcessing}
+            />
+          </label>
+          
+          {uploadProgress !== null && (
+            <div style={styles.progressOverlay}>
+              <div style={styles.progressText}>{uploadProgress}%</div>
             </div>
-            <div style={{ fontSize: 12, marginTop: 6 }}>{uploadProgress}%</div>
-          </div>
-        )}
-
-        {editing ? (
-          <input
-            value={pseudo}
-            onChange={(e) => setPseudo(e.target.value)}
-            style={{
-              marginTop: 15,
-              padding: 8,
-              borderRadius: 8,
-              border: "none",
-              textAlign: "center",
-              width: 220,
-            }}
-            placeholder="Ton pseudo"
-          />
-        ) : (
-          <h2 style={{ marginTop: 12 }}>{user?.displayName || pseudo || "Utilisateur"}</h2>
-        )}
-
-        <div style={{ fontWeight: "700", color: currentRole.color }}>{currentRole.label}</div>
-
-        {subscriptionEnd && (
-          <div style={{ marginTop: 6, fontSize: 13 }}>
-            Offre valide : <strong>{daysLeft} jour{daysLeft > 1 ? "s" : ""}</strong>
-          </div>
-        )}
-
-        {/* badges */}
-        <div style={{ marginTop: 10 }}>
-          {badges?.length ? (
-            badges.map((b, i) => (
-              <span
-                key={b.id || `${b.label}-${i}`}
-                style={{
-                  margin: 4,
-                  padding: "6px 8px",
-                  background: b.color || "#333",
-                  color: "#fff",
-                  borderRadius: 8,
-                  fontSize: 12,
-                  display: "inline-block",
-                }}
-              >
-                {b.label}
-              </span>
-            ))
-          ) : (
-            <div style={{ fontSize: 12, color: "#9aa" }}>Aucun badge</div>
           )}
         </div>
-      </div>
 
-      {/* Actions */}
-      <div style={{ display: "flex", gap: 10, justifyContent: "center", marginBottom: 18 }}>
-        {editing ? (
-          <NeonButton color={neonColor} label="💾 Enregistrer" onClick={savePseudo} />
-        ) : (
-          <NeonButton color={neonColor} label="✏ Modifier" onClick={() => setEditing(true)} />
-        )}
-        <NeonButton color={neonColor} label="🎨 Thème (50 Ink)" onClick={buyTheme} />
-        <NeonButton color={neonColor} label="📤 Exporter profil" onClick={() => alert("Feature non disponible")} />
-      </div>
+        <div style={styles.infoBlock}>
+          {editing ? (
+            <input 
+              autoFocus 
+              onBlur={savePseudo}
+              onKeyDown={(e) => e.key === 'Enter' && savePseudo()}
+              value={pseudo} 
+              onChange={(e) => setPseudo(e.target.value)}
+              style={styles.pseudoInput}
+              placeholder={userData.username}
+            />
+          ) : (
+            <h2 style={styles.username} onClick={() => {setPseudo(userData.username); setEditing(true);}}>
+              {userData.username} <PenTool size={14} style={{opacity: 0.5}} />
+            </h2>
+          )}
+          
+          <div style={{...styles.roleBadge, color: currentRole.color, border: `1px solid ${currentRole.color}44`}}>
+            {currentRole.icon} {currentRole.label}
+          </div>
 
-      {/* Subscription / Offers */}
-      <section style={{ marginTop: 12, textAlign: "center" }}>
-        <h3 style={{ marginBottom: 8 }}>Abonnement</h3>
-        <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
-          <button onClick={() => activateOffer("premium")} style={smallBtnStyle(neonColor)}>Premium</button>
-          <button onClick={() => activateOffer("vip")} style={smallBtnStyle(neonColor)}>VIP</button>
-          <button onClick={() => activateOffer("merchant")} style={smallBtnStyle(neonColor)}>Commerçant</button>
+          <div style={styles.inkDisplay}>
+            <Wallet size={16} color="#ffd700" />
+            <span style={styles.inkAmount}>{userData.inks || 0} INKS</span>
+          </div>
         </div>
-      </section>
-
-      {/* Stats */}
-      <section style={{ display: "flex", justifyContent: "space-around", marginTop: 28 }}>
-        <div style={statBoxStyle()}><div style={{ fontSize: 20, fontWeight: 700 }}>{followers}</div><div>Abonnés</div></div>
-        <div style={statBoxStyle()}><div style={{ fontSize: 20, fontWeight: 700 }}>{following}</div><div>Abonnements</div></div>
-        <div style={statBoxStyle()}><div style={{ fontSize: 20, fontWeight: 700 }}>{nbStories}</div><div>Stories</div></div>
-        <div style={statBoxStyle()}><div style={{ fontSize: 20, fontWeight: 700 }}>{likedStories.length}</div><div>Likes</div></div>
-        <div style={statBoxStyle()}><div style={{ fontSize: 20, fontWeight: 700 }}>{sharedStories.length}</div><div>Partages</div></div>
-      </section>
-
-      {/* Menu */}
-      <div style={{ marginTop: 36 }}>
-        <div style={menuRowStyle()} onClick={() => setView("profile_theme")}>🎨 Thème & Apparence</div>
-        <div style={menuRowStyle()} onClick={() => setView("profile_security")}>🔐 Sécurité</div>
-        <div style={menuRowStyle()} onClick={openAuthorPanel}>✍️ Espace Auteur</div>
-        <div style={menuRowStyle()} onClick={openAdminPanel}>🛠️ Administration</div>
-        <div style={menuRowStyle()} onClick={() => setView("wallet")}>💰 Wallet Ink : {ink}</div>
-        <div style={menuRowStyle()} onClick={() => setView("home")}>← Retour accueil</div>
       </div>
+
+      {/* GRILLE DE STATS */}
+      <div style={styles.statsContainer}>
+        <div style={styles.statItem}>
+          <span style={styles.statNum}>{userData.followers?.length || 0}</span>
+          <span style={styles.statLabel}>Abonnés</span>
+        </div>
+        <div style={styles.statDivider} />
+        <div style={styles.statItem}>
+          <span style={styles.statNum}>{userData.following?.length || 0}</span>
+          <span style={styles.statLabel}>Suivis</span>
+        </div>
+        <div style={styles.statDivider} />
+        <div style={styles.statItem}>
+          <span style={styles.statNum}>{userData.storiesCount || 0}</span>
+          <span style={styles.statLabel}>Histoires</span>
+        </div>
+      </div>
+
+      {/* NAVIGATION / MENU */}
+      <div style={styles.menuList}>
+        <h3 style={styles.menuTitle}>COMPTE & ÉCONOMIE</h3>
+        <MenuRow icon={<Wallet size={20} color="#ffd700"/>} label="Banque & Boutique" onClick={() => setView("wallet")} />
+        <MenuRow icon={<PenTool size={20} color="#ff6a00"/>} label="Espace Créateur" onClick={() => setView("author_dashboard")} />
+        
+        <h3 style={styles.menuTitle}>PARAMÈTRES</h3>
+        <MenuRow icon={<Shield size={20} color="#00f7ff"/>} label="Sécurité" onClick={() => setView("profile_security")} />
+        
+        <button style={styles.logoutBtn} onClick={logout}>
+          <LogOut size={18} /> Déconnexion
+        </button>
+      </div>
+
+      {isProcessing && (
+        <div style={styles.processingToast}>
+          <AlertCircle size={16} /> Transaction Bancaire en cours...
+        </div>
+      )}
     </div>
   );
 }
 
-/* ---------- small helpers (styles) ---------- */
-function smallBtnStyle(accent) {
-  return {
-    padding: "8px 12px",
-    borderRadius: 8,
-    border: "none",
-    background: accent,
-    color: "#fff",
-    cursor: "pointer",
-    fontWeight: 700,
-  };
-}
-function statBoxStyle() {
-  return {
-    textAlign: "center",
-    minWidth: 90,
-    padding: "6px 8px",
-    borderRadius: 8,
-    background: "#0b0b0b22",
-  };
-}
-function menuRowStyle() {
-  return {
-    padding: "12px 10px",
-    borderRadius: 8,
-    margin: "8px 0",
-    background: "#00000018",
-    cursor: "pointer",
-  };
-}
+// Composant Ligne de Menu
+const MenuRow = ({ icon, label, onClick }) => (
+  <div style={styles.menuRow} onClick={onClick}>
+    <div style={styles.menuRowLeft}>{icon} <span>{label}</span></div>
+    <ChevronRight size={18} color="#333" />
+  </div>
+);
+
+// --- STYLES ---
+const styles = {
+  page: { minHeight: "100vh", backgroundColor: "#050505", color: "#fff", fontFamily: "'Inter', sans-serif", paddingBottom: "30px" },
+  loader: { height: "100vh", display: "flex", justifyContent: "center", alignItems: "center", color: "#00f7ff", fontWeight: "bold" },
+  cover: { height: "160px", position: "relative", borderBottom: "1px solid #111" },
+  backBtn: { position: "absolute", top: 25, left: 20, backgroundColor: "rgba(0,0,0,0.6)", border: "none", color: "#fff", padding: "10px 18px", borderRadius: "30px", fontSize: "13px", fontWeight: "600", backdropFilter: "blur(5px)" },
+  profileSection: { marginTop: "-60px", display: "flex", flexDirection: "column", alignItems: "center", padding: "0 20px" },
+  avatarWrapper: { position: "relative", width: "120px", height: "120px", marginBottom: "15px" },
+  avatar: { width: "100%", height: "100%", borderRadius: "50%", border: "4px solid #050505", objectFit: "cover", backgroundColor: "#111", boxShadow: "0 10px 25px rgba(0,0,0,0.5)" },
+  uploadBtn: { position: "absolute", bottom: "5px", right: "5px", padding: "10px", borderRadius: "50%", cursor: "pointer", display: "flex", boxShadow: "0 4px 15px rgba(0,0,0,0.4)", transition: "0.2s" },
+  progressOverlay: { position: "absolute", top: 0, left: 0, width: "100%", height: "100%", backgroundColor: "rgba(0,0,0,0.75)", borderRadius: "50%", display: "flex", justifyContent: "center", alignItems: "center" },
+  progressText: { color: "#00f7ff", fontWeight: "900", fontSize: "16px" },
+  infoBlock: { textAlign: "center", width: "100%" },
+  username: { fontSize: "24px", fontWeight: "800", letterSpacing: "-0.5px", marginBottom: "8px", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" },
+  pseudoInput: { backgroundColor: "#111", border: "2px solid #00f7ff", color: "#fff", padding: "8px 15px", borderRadius: "12px", textAlign: "center", fontSize: "20px", fontWeight: "bold", width: "80%" },
+  roleBadge: { display: "inline-flex", alignItems: "center", gap: "8px", fontSize: "11px", fontWeight: "900", padding: "5px 15px", borderRadius: "30px", backgroundColor: "rgba(255,255,255,0.03)", textTransform: "uppercase", letterSpacing: "1px" },
+  inkDisplay: { display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginTop: "12px", padding: "8px 20px", backgroundColor: "#111", borderRadius: "15px", width: "fit-content", margin: "12px auto" },
+  inkAmount: { color: "#ffd700", fontWeight: "bold", fontSize: "15px" },
+  statsContainer: { display: "flex", margin: "25px 20px", padding: "20px", backgroundColor: "#0a0a0a", borderRadius: "20px", border: "1px solid #151515" },
+  statItem: { flex: 1, textAlign: "center" },
+  statNum: { display: "block", fontSize: "20px", fontWeight: "900", color: "#fff" },
+  statLabel: { fontSize: "10px", color: "#444", textTransform: "uppercase", marginTop: "4px", fontWeight: "700" },
+  statDivider: { width: "1px", height: "35px", backgroundColor: "#222" },
+  menuList: { padding: "0 20px" },
+  menuTitle: { fontSize: "11px", color: "#333", fontWeight: "800", marginBottom: "12px", marginLeft: "10px", textTransform: "uppercase", letterSpacing: "1.5px" },
+  menuRow: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px", backgroundColor: "#0e0e0e", borderRadius: "16px", marginBottom: "12px", cursor: "pointer", transition: "0.2s" },
+  menuRowLeft: { display: "flex", alignItems: "center", gap: "15px", fontSize: "15px", fontWeight: "600" },
+  logoutBtn: { width: "100%", marginTop: "20px", padding: "18px", backgroundColor: "rgba(255,68,68,0.05)", border: "1px solid rgba(255,68,68,0.1)", borderRadius: "16px", color: "#ff4444", display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", fontWeight: "bold", cursor: "pointer" },
+  processingToast: { position: "fixed", bottom: "20px", left: "50%", transform: "translateX(-50%)", backgroundColor: "#ffd700", color: "#000", padding: "10px 20px", borderRadius: "30px", fontWeight: "bold", fontSize: "12px", display: "flex", alignItems: "center", gap: "10px", boxShadow: "0 10px 30px rgba(0,0,0,0.5)", zIndex: 100 }
+};

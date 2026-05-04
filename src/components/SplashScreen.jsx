@@ -7,8 +7,7 @@ export default function SplashScreen({ finishLoading }) {
   const [loading, setLoading] = useState(true);
   const [visible, setVisible] = useState(true);
 
-  // 🔥 TEXTE ANIMATION (SCRAMBLE EFFECT)
-  const finalText = "ComicCrafte Studio";
+  const finalText = "ComicCrafte";
   const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
   const [displayText, setDisplayText] = useState("");
 
@@ -27,26 +26,23 @@ export default function SplashScreen({ finishLoading }) {
       );
 
       if (iteration >= finalText.length) clearInterval(interval);
-
-      iteration += 1 / 2;
-    }, 40);
+      iteration += 0.5;
+    }, 35);
 
     return () => clearInterval(interval);
   }, []);
 
-  // 🌌 PARTICULES
   const particles = useMemo(() => {
-    return Array.from({ length: 80 }).map(() => ({
+    return Array.from({ length: 90 }).map(() => ({
       top: Math.random() * 100,
       left: Math.random() * 100,
-      duration: 4 + Math.random() * 6,
+      duration: 5 + Math.random() * 6,
       size: Math.random() * 2 + 1
     }));
   }, []);
 
-  // 🌌 CONSTELLATION LINES
   const lines = useMemo(() => {
-    return Array.from({ length: 25 }).map(() => ({
+    return Array.from({ length: 30 }).map(() => ({
       x1: Math.random() * 100,
       y1: Math.random() * 100,
       x2: Math.random() * 100,
@@ -54,7 +50,6 @@ export default function SplashScreen({ finishLoading }) {
     }));
   }, []);
 
-  // 🌠 SHOOTING STARS
   const shootingStars = useMemo(() => {
     return Array.from({ length: 6 }).map(() => ({
       top: Math.random() * 100,
@@ -62,21 +57,12 @@ export default function SplashScreen({ finishLoading }) {
     }));
   }, []);
 
-  // 🔄 ORBITS
-  const orbitLogos = useMemo(() => {
-    return Array.from({ length: 8 }).map((_, i) => ({
-      size: 15 + Math.random() * 15,
-      duration: 6 + i
-    }));
-  }, []);
-
-  // ⏱ TIMING FIX (ANTI BUG)
   useEffect(() => {
-    const t1 = setTimeout(() => setLoading(false), 3000);
+    const t1 = setTimeout(() => setLoading(false), 2800);
     const t2 = setTimeout(() => {
       setVisible(false);
       finishLoading();
-    }, 6000);
+    }, 5500);
 
     return () => {
       clearTimeout(t1);
@@ -89,18 +75,17 @@ export default function SplashScreen({ finishLoading }) {
       {visible && (
         <motion.div
           initial={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 1 }}
+          exit={{ opacity: 0, scale: 1.05, filter: "blur(10px)" }}
+          transition={{ duration: 0.8, ease: "easeInOut" }}
           style={s.container}
         >
-          {/* 🌌 BACKGROUND */}
           <div style={s.bg}>
             <div style={s.grid} />
             <div style={s.gradient} />
             <div style={s.nebula1} />
             <div style={s.nebula2} />
+            <div style={s.galaxyGlow} />
 
-            {/* CONSTELLATION */}
             <svg style={s.svg}>
               {lines.map((l, i) => (
                 <motion.line
@@ -109,16 +94,15 @@ export default function SplashScreen({ finishLoading }) {
                   y1={`${l.y1}%`}
                   x2={`${l.x2}%`}
                   y2={`${l.y2}%`}
-                  stroke="rgba(255,255,255,0.1)"
+                  stroke="rgba(255,255,255,0.08)"
                   strokeWidth="1"
-                  animate={{ opacity: [0.1, 0.5, 0.1] }}
-                  transition={{ duration: 4, repeat: Infinity }}
+                  animate={{ opacity: [0.1, 0.4, 0.1] }}
+                  transition={{ duration: 5, repeat: Infinity }}
                 />
               ))}
             </svg>
           </div>
 
-          {/* ✨ PARTICLES */}
           <div style={s.particles}>
             {particles.map((p, i) => (
               <motion.div
@@ -131,7 +115,7 @@ export default function SplashScreen({ finishLoading }) {
                   height: p.size
                 }}
                 animate={{
-                  y: [0, -100, 0],
+                  y: [0, -120, 0],
                   opacity: [0.2, 1, 0.2]
                 }}
                 transition={{
@@ -142,14 +126,10 @@ export default function SplashScreen({ finishLoading }) {
             ))}
           </div>
 
-          {/* 🌠 SHOOTING STARS */}
           {shootingStars.map((sht, i) => (
             <motion.div
               key={i}
-              style={{
-                ...s.shootingStar,
-                top: `${sht.top}%`
-              }}
+              style={{ ...s.shootingStar, top: `${sht.top}%` }}
               animate={{
                 x: ["-10%", "110%"],
                 opacity: [0, 1, 0]
@@ -162,86 +142,75 @@ export default function SplashScreen({ finishLoading }) {
             />
           ))}
 
-          {/* 🔄 ORBIT */}
-          <div style={s.orbit}>
-            {orbitLogos.map((o, i) => (
-              <motion.div
-                key={i}
-                style={{
-                  ...s.orbitItem,
-                  width: o.size,
-                  height: o.size
-                }}
-                animate={{ rotate: 360 }}
-                transition={{
-                  duration: o.duration,
-                  repeat: Infinity,
-                  ease: "linear"
-                }}
-              >
-                <div style={s.smallLogo}>C</div>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* 🚀 LOGO */}
           <motion.div
-            initial={{ scale: 0.5, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 1 }}
+            initial={{ scale: 0.6, opacity: 0, filter: "blur(20px)" }}
+            animate={{ scale: 1, opacity: 1, filter: "blur(0px)" }}
+            transition={{ duration: 1.2, ease: "easeOut" }}
             style={s.center}
           >
             <motion.div
               animate={{
                 boxShadow: [
-                  "0 0 10px #ff0055",
-                  "0 0 30px #00f7ff",
-                  "0 0 10px #ff0055"
-                ]
+                  "0 0 20px #ff0055",
+                  "0 0 60px #00f7ff",
+                  "0 0 20px #ff0055"
+                ],
+                rotate: [0, 2, -2, 0]
               }}
-              transition={{ duration: 2, repeat: Infinity }}
+              transition={{ duration: 4, repeat: Infinity }}
               style={s.logo}
             >
               C
             </motion.div>
 
-            <h1 style={s.title}>
+            <motion.h1 style={s.title}>
               {displayText.split("").map((char, i) => (
                 <motion.span
                   key={i}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.03 }}
+                  initial={{ opacity: 0, y: 20, filter: "blur(10px)" }}
+                  animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                  transition={{
+                    delay: i * 0.04,
+                    duration: 0.5,
+                    ease: "easeOut"
+                  }}
+                  style={s.char}
                 >
                   {char}
                 </motion.span>
               ))}
-            </h1>
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 0.8, y: 0 }}
+              transition={{ delay: 1.2 }}
+              style={s.subtitle}
+            >
+              Studio
+            </motion.p>
           </motion.div>
 
-          {/* ⚡ LOADER */}
           <div style={s.loader}>
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: loading ? "70%" : "100%" }}
-              transition={{ duration: 3 }}
+              transition={{ duration: 2.5 }}
               style={s.progress}
             />
           </div>
 
-          {/* 🔵 DOTS */}
           <div style={s.dots}>
             {[0, 1, 2].map(i => (
               <motion.div
                 key={i}
                 style={s.dot}
-                animate={{ y: [0, -8, 0], opacity: [0.3, 1, 0.3] }}
+                animate={{ y: [0, -10, 0], opacity: [0.3, 1, 0.3] }}
                 transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
               />
             ))}
           </div>
 
-          {/* TEXT */}
           <motion.p style={s.text}>
             {loading
               ? "Initialisation du système..."
@@ -313,6 +282,17 @@ const s = {
     opacity: 0.2
   },
 
+  galaxyGlow: {
+    position: "absolute",
+    width: "600px",
+    height: "600px",
+    background: "radial-gradient(circle, rgba(0,247,255,0.15), transparent)",
+    filter: "blur(120px)",
+    top: "20%",
+    left: "50%",
+    transform: "translateX(-50%)"
+  },
+
   svg: {
     position: "absolute",
     width: "100%",
@@ -338,54 +318,51 @@ const s = {
     background: "linear-gradient(90deg, #fff, transparent)"
   },
 
-  orbit: {
-    position: "absolute",
-    width: "250px",
-    height: "250px"
-  },
-
-  orbitItem: {
-    position: "absolute",
-    borderRadius: "50%",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center"
-  },
-
-  smallLogo: {
-    color: "#00f7ff",
-    fontSize: "10px"
-  },
-
   center: {
     zIndex: 2,
     textAlign: "center"
   },
 
   logo: {
-    width: "80px",
-    height: "80px",
+    width: "90px",
+    height: "90px",
     borderRadius: "50%",
     border: "2px solid #ff0055",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    fontSize: "30px",
+    fontSize: "34px",
     color: "#ff0055",
-    marginBottom: "15px"
+    marginBottom: "20px",
+    backdropFilter: "blur(10px)"
   },
 
   title: {
     color: "#fff",
-    fontSize: "20px",
-    letterSpacing: "3px"
+    fontSize: "26px",
+    letterSpacing: "4px",
+    fontWeight: "900"
+  },
+
+  char: {
+    display: "inline-block",
+    textShadow: "0 0 15px rgba(0,255,255,0.6)"
+  },
+
+  subtitle: {
+    marginTop: "6px",
+    fontSize: "12px",
+    letterSpacing: "6px",
+    color: "rgba(255,255,255,0.6)",
+    textTransform: "uppercase",
+    fontWeight: "600"
   },
 
   loader: {
-    width: "180px",
+    width: "200px",
     height: "5px",
     background: "rgba(255,255,255,0.1)",
-    marginTop: "20px",
+    marginTop: "25px",
     borderRadius: "10px",
     overflow: "hidden"
   },
@@ -415,7 +392,6 @@ const s = {
   }
 };
 
-// GRID ANIMATION
 if (typeof document !== "undefined") {
   const style = document.createElement("style");
   style.innerHTML = `

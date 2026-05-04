@@ -43,31 +43,45 @@ const storyData = useMemo(() => {
 
   if (isOfflineStory) return safeStory;
 
-  const allStories = [...(storiesAction || []), ...(storiesGeneral || [])];
+  const allStories = [
+    ...(storiesAction || []),
+    ...(storiesGeneral || [])
+  ];
 
   return allStories.find(s => s.id === safeStory.id) || safeStory;
-
 }, [safeStory, isOfflineStory]);
 
-// Normalisation des chapitres (ULTRA IMPORTANT)
+// ================== NORMALISATION UNIQUE (PROPRE + UNIVERSELLE) ==================
 const chapters = useMemo(() => {
-  if (!storyData) return [];
+  const s = storyData || {};
 
-  // Si déjà format chapitres
-  if (Array.isArray(storyData.chapters)) {
-    return storyData.chapters;
-  }
-
-  // Si format content (ancien)
-  if (Array.isArray(storyData.content)) {
-    return storyData.content.map((item, index) => ({
-      title: item.title || `Chapitre ${index + 1}`,
-      pages: item.pages || item || []
+  // 1. Format standard (chapters)
+  if (Array.isArray(s.chapters) && s.chapters.length > 0) {
+    return s.chapters.map((ch, i) => ({
+      title: ch.title || `Chapitre ${i + 1}`,
+      pages: Array.isArray(ch.pages) ? ch.pages : []
     }));
   }
 
-  return [];
+  // 2. Ancien format (content)
+  if (Array.isArray(s.content) && s.content.length > 0) {
+    return s.content.map((ch, i) => ({
+      title: ch.title || `Chapitre ${i + 1}`,
+      pages: Array.isArray(ch.pages) ? ch.pages : (Array.isArray(ch) ? ch : [])
+    }));
+  }
 
+  // 3. Format direct pages
+  if (Array.isArray(s.pages) && s.pages.length > 0) {
+    return [
+      {
+        title: "Chapitre Unique",
+        pages: s.pages
+      }
+    ];
+  }
+
+  return [];
 }, [storyData]);
 
 // Sécurisation index (évite crash)
@@ -352,23 +366,24 @@ const renderPageContent = (contentArray = []) => {
         </div>
       </main>
 
-      {/* --- LE NOUVEAU MENU DES RÉGLAGES (Ultra complet) --- */}
-      <SettingsMenu 
-        isOpen={showSettings} 
-        onClose={() => setShowSettings(false)} 
-        settings={{ 
-          theme, 
-          fontSize, 
-          isWebtoonMode, 
-          autoScroll, 
-        }} 
-        setSettings={{ 
-          setTheme, 
-          setFontSize, 
-          setIsWebtoonMode, 
-          setAutoScroll, 
-        }} 
-      />
+{/* --- DANS TON READER.JSX --- */}
+<SettingsMenu 
+  isOpen={showSettings} 
+  onClose={() => setShowSettings(false)} 
+  settings={{ 
+    theme, 
+    fontSize, 
+    isWebtoonMode, 
+    autoScroll 
+  }} 
+  actions={{ 
+    setTheme, 
+    setFontSize, 
+    setIsWebtoonMode, 
+    setAutoScroll 
+  }} 
+/>
+
 
       {/* --- LE DRAWER DES CHAPITRES (Pour changer d'histoire facilement) --- */}
       <AnimatePresence>

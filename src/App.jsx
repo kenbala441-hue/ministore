@@ -14,6 +14,8 @@ import AssistantGemini from "./components/AssistantGemini"; // adapte le chemin 
 import { useUser } from "./screens/users/userContext";
 import MainLayout from "./components/MainLayout";
 import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css";
+// Remplace-la par un import direct pour tester :
+import Reader from "./screens/Reader"; 
 import {
   AuthorDashboardScreen,
   StudioDashboard,
@@ -41,7 +43,6 @@ const Login = lazy(() => import("./screens/Login"));
 const Terms = lazy(() => import("./screens/Terms"));
 const Home = lazy(() => import("./screens/Home/Home/index.jsx"));
 const MySeries = lazy(() => import("./screens/MySeries"));
-const Reader = lazy(() => import("./screens/Reader"));
 const Store = lazy(() => import("./screens/Store"));
 const InkMarket = lazy(() => import("./screens/InkMarket"));
 const Messaging = lazy(() => import("./screens/Messaging"));
@@ -143,6 +144,10 @@ function AppContent() {
       clearTimeout(maxTimer);
     };
   }, [authReady]);
+//selectedStory
+useEffect(() => {
+  console.log("SELECTED STORY:", selectedStory);
+}, [selectedStory]);
 
   // 🔹 Email login
   const handleLogin = async (email, password) => {

@@ -209,18 +209,56 @@ export const COMICCRAFTE_STORIES = [
     id: "shadow-quest-01",
     title: "Shadow Quest",
     author: "ComicCrafte Studio",
-    coverImage: "https://res.cloudinary.com/dn9c4ctav/image/upload/v1775980683151/1775980683151.jpg",
+    coverImage: "https://res.cloudinary.com/dn9c4ctav/image/upload/v1777746611/1777746504577_ilaj1q.png",
     genres: ["action", "aventure"],
     viewsCount: 204,
     likesCount: 88,
     isOriginal: true,
-    chapters: [{ id: 0, title: "Chapitre 1", pages: ["La quête commence dans l'ombre."] }]
+    chapters: [{ id: 0, title: "Chapitre 1", pages: [`# Chapitre 1 : Exil de Sang et Pacte d'Ombre
+          
+          Le Don était censé être une bénédiction... mais pour nous, ce fut une sentence de mort.
+          
+          ---
+          
+          **LA CITÉ RADIEUSE — IL Y A 15 ANS**
+          Les flammes lèchent le ciel d'ébène. Les cris des innocents sont étouffés par le fracas des armures dorées. Les Chevaliers de l'Église de la Lumière ne font pas de prisonniers. 
+          
+          L'ombre est une impureté. Et l'impureté doit être purgée par le feu.
+          
+          Un enfant, caché derrière les décombres de sa propre maison, voit le regard froid d'un Grand Prêtre. Ses parents ne sont plus que des silhouettes immobiles au sol.
+          
+          ---
+          
+          **25 ANS PLUS TARD — LES TERRES D'OMBRE**
+          
+          Kai se tient au bord d'une falaise stérile. Ses vêtements ne sont que des guenilles poussiéreuses, mais son regard est resté celui de cet enfant. Un regard de braise sous une pluie de cendres.
+          
+          "Ils disent que nous sommes démoniaques. Que notre magie est une maladie."
+          
+          Le vent siffle entre les rochers pointus. Ici, rien ne pousse. La famine est la seule compagne fidèle des exilés. Kai sent la morsure du froid, mais c'est la rage qui le maintient debout.
+          
+          Soudain, le sol tremble. Des créatures surgissent des crevasses. Des bêtes corrompues, attirées par l'odeur de la vie. Kai tire son épée rouillée, mais il est encerclé. Une griffe lui déchire l'épaule. Il s'effondre.
+          
+          *Est-ce ainsi que tout se termine ? Dans la boue et l'oubli ?*
+          
+          Une voix, profonde et abyssale, résonne alors dans son esprit :
+          — **Veux-tu le pouvoir d'effacer la lumière de ce monde ?**
+          
+          Une lueur violette jaillit de nulle part. Un être de ténèbres pures se dessine devant lui. 
+          
+          — **Je le veux**, murmure Kai en crachant du sang. **Je deviendrai l'Arcane.**
+          
+          Un sceau obscur brûle soudain son torse. Une puissance nouvelle circule dans ses veines, froide et absolue. Les créatures reculent, terrifiées. 
+          
+          Une silhouette masquée apparaît alors sur le surplomb voisin, observant la scène. La Magicienne Rénégate. 
+          
+          La légende ne fait que commencer.`] }]
   },
   {
     id: "neon-city-01",
     title: "Neon City",
     author: "ComicCrafte Studio",
-    coverImage: "https://res.cloudinary.com/dn9c4ctav/image/upload/v1775980684964/1775980684964.jpg",
+    coverImage: "https://res.cloudinary.com/dn9c4ctav/image/upload/v1777757923/1777757573600_muoqpd.png",
     genres: ["cyberpunk", "sci-fi"],
     viewsCount: 312,
     likesCount: 145,
@@ -231,7 +269,7 @@ export const COMICCRAFTE_STORIES = [
     id: "dark-soul-01",
     title: "Dark Soul",
     author: "ComicCrafte Studio",
-    coverImage: "https://res.cloudinary.com/dn9c4ctav/image/upload/v1775980686299/1775980686299.jpg",
+    coverImage: "https://res.cloudinary.com/dn9c4ctav/image/upload/v1777766059/file_00000000452071f59271369b892007d3_xycuoj.png",
     genres: ["horreur", "dark fantasy"],
     viewsCount: 98,
     likesCount: 41,
@@ -242,18 +280,65 @@ export const COMICCRAFTE_STORIES = [
     id: "eternal-love-01",
     title: "Eternal Love",
     author: "ComicCrafte Studio",
-    coverImage: "https://res.cloudinary.com/dn9c4ctav/image/upload/v1775980691936/1775980691936.jpg",
+    coverImage: "https://res.cloudinary.com/dn9c4ctav/image/upload/v1777759367/Screenshot_20260502_230204_synvam.jpg",
     genres: ["romance", "drame"],
     viewsCount: 425,
     likesCount: 230,
     isOriginal: true,
-    chapters: [{ id: 0, title: "Chapitre 1", pages: ["Un amour qui traverse le temps."] }]
+    chapters: [{ id: 0, title: "Chapitre 1", pages: [`# Chapitre 1 : Le Trône de Verre
+
+Léa ajuste sa veste de tailleur devant un miroir doré. Elle a l'air d'une guerrière prête pour la bataille.
+
+*« Dans cette famille, le pouvoir se transmet de père en fils. Mais mon père n'a qu'une fille. Et pour eux, c'est une anomalie à corriger. »*
+
+---
+
+**LE BUREAU DU PATRON**
+Son père, assis derrière un bureau massif, semble écrasé par la fatigue.
+— Léa, le conseil n'acceptera jamais une femme célibataire à la tête d'Eternal Group. Marie-toi, laisse ton mari porter le titre, et tu dirigeras dans l'ombre. C'est ta seule chance.
+
+Léa refuse d'un geste sec, le regard brûlant.
+— Je ne suis pas une monnaie d'échange, Papa. J'ai étudié plus que n'importe quel héritier mâle. Je dirigerai sous mon propre nom, ou pas du tout.
+
+---
+
+**LA CHUTE**
+Une ellipse brutale. La pluie tombe sur des gyrophares rouges et bleus. L'ambulance hurle. 
+Le destin a tranché avant elle. Son père est sous respirateur, entre la vie et la mort. Sa seule protection a disparu.
+
+Dans le reflet de la vitre de l'hôpital, Arthur apparaît. Un sourire cruel aux lèvres.
+— Les vautours sentent la mort, Léa. Sans mari, sans père... tu n'es plus rien.
+
+---
+
+**LE COUP D'ÉTAT**
+Salle du conseil. L'ambiance est glaciale. M. Dubois prend la parole d'un ton mielleux.
+— Arthur a racheté les parts minoritaires cette nuit. La régence lui revient.
+
+Léa explose : "C'est un coup d'État !" 
+Mais Arthur s'assoit déjà dans le fauteuil de son père.
+— On ne viole rien, on nettoie. Sécurité ! Escortez Mademoiselle hors de NOTRE bâtiment.
+
+---
+
+**L'ACCIDENT ET L'OUBLI**
+Une course-poursuite nocturne sur la corniche. Une voiture noire percute Léa de plein fouet. Son véhicule part en tonneau et finit sa course près d'une rivière.
+
+Une silhouette s'approche de l'épave ensanglantée. Léo.
+
+Quelques jours plus tard, Léa ouvre les yeux dans un lit blanc. Sa tête est bandée. Léo est là, il ferme son dossier avec un léger sourire.
+— Vous êtes enfin réveillée. Vous savez comment vous vous appelez ?
+
+Léa regarde autour d'elle, le regard vide et terrifiée.
+— Je... je ne sais pas. Qui suis-je ? Et qui êtes-vous ?
+
+**L'héritière est morte. Une nouvelle vie commence dans l'ombre.`] }]
   },
   {
     id: "cyber-hunter-01",
     title: "Cyber Hunter",
     author: "ComicCrafte Studio",
-    coverImage: "https://res.cloudinary.com/dn9c4ctav/image/upload/v1775980694231/1775980694231.jpg",
+    coverImage: "https://res.cloudinary.com/dn9c4ctav/image/upload/v1777770261/Screenshot_20260503_020340_vipgza.jpg",
     genres: ["action", "sci-fi"],
     viewsCount: 189,
     likesCount: 76,

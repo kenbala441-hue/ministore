@@ -8,29 +8,64 @@ export const PUBLIC_STORIES = [
   id: "peter-pan-01",
   title: "Peter Pan",
   author: "J.M. Barrie",
-  coverImage: "https://images.unsplash.com/photo-1589998059171-988d887df646?w=500",
+  coverImage: "https://res.cloudinary.com/dn9c4ctav/image/upload/v1777505838/1777505787722_t9uat6.png",
   genres: ["aventure", "fantastique"],
   viewsCount: 1500,
   likesCount: 850,
   chapters: [
-    {
+      {
       id: 0,
       title: "Chapitre 1 - L'enfant qui ne voulait pas grandir",
       pages: [
-        "https://images.unsplash.com/photo-1509023464722-18d996393ca8?w=800",
-        "La nuit était calme. Wendy observait les étoiles.",
-        "https://images.unsplash.com/photo-1526318472351-bc6f2e2c1c1f?w=800",
-        "— Tu veux voler ?",
-        "Fin du chapitre"
+        "https://res.cloudinary.com/dn9c4ctav/image/upload/v1777511824/1777511755977_pn5soq.png",
+        "# Une Ombre à la Fenêtre",
+        "La nuit sur Londres était d'un calme trompeur. Dans la chambre des enfants Darling, Wendy observait les étoiles par la fenêtre entrouverte, là où le ciel semblait toucher les toits sombres de la ville.",
+        "Tout avait commencé par un murmure, un froissement d'ailes ou peut-être simplement le vent. Mais Wendy savait que ce n'était pas le vent.",
+        "https://res.cloudinary.com/dn9c4ctav/image/upload/v1777512555/1777512271689_pxmcg2.png",
+        "Soudain, une silhouette agile se découpa sur le rebord. Un garçon, vêtu de feuilles et de tissus étranges, fixait l'obscurité avec des yeux brillants de malice.",
+        "— Je l'ai perdue, murmura-t-il, cherchant désespérément son ombre qui s'était détachée pour se cacher dans un recoin de la nursery.",
+        "Wendy se redressa, le cœur battant à tout rompre. Elle n'avait pas peur, elle était fascinée par ce visiteur nocturne qui semblait défier les lois de la gravité.",
+        "https://res.cloudinary.com/dn9c4ctav/image/upload/v1777513433/1777513376610_mloqfx.png",
+        "# La Magie du Vol",
+        "Le garçon se tourna vers elle. — Je m'appelle Peter Pan. Et toi ?",
+        "— Wendy Moira Angela Darling, répondit-elle d'une voix tremblante mais assurée.",
+        "Peter s'approcha, escorté par une petite lueur dorée qui s'agitait dans tous les sens : la fée Clochette. Elle ne semblait pas apprécier la présence de Wendy, émettant des bruits de clochettes agacés.",
+        "Peter récupéra enfin son ombre grâce à l'aide de Wendy. Pour la remercier, il lui proposa l'impossible.",
+        "— Viens avec moi, Wendy. Là-bas, personne ne te forcera jamais à devenir une grande personne. On s'amuse tout le temps.",
+        "Wendy regarda ses frères endormis, puis la main tendue de Peter. L'aventure l'appelait.",
+        "— Mais je ne sais pas voler, Peter !",
+        "Il sourit, un sourire qui contenait tous les rêves de l'enfance. — C'est facile. Il suffit d'avoir une pensée agréable et un peu de poussière de fée.",
+        "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800",
+        "Il saupoudra Wendy d'une fine poussière dorée. Elle se sentit soudain légère, comme si le sol n'était plus qu'une suggestion. Un saut, un rire, et la voilà qui flottait sous le plafond.",
+        "— Deuxième étoile à droite, et tout droit jusqu'au matin ! cria Peter en s'élançant dans le vide.",
+        "Et ensemble, ils s'envolèrent au-dessus de Londres, laissant derrière eux le monde des adultes pour rejoindre Neverland.",
+        "Fin du chapitre 1"
       ]
     },
+
     {
       id: 1,
-      title: "Chapitre 2 - Neverland",
+      title: "Chapitre 2 - Le Vol vers Neverland",
       pages: [
-        "Peter emmène Wendy vers Neverland.",
-        "Un monde rempli de pirates et de magie.",
-        "Fin du chapitre"
+        "https://res.cloudinary.com/dn9c4ctav/image/upload/v1777505838/1777505787722_t9uat6.png",
+        "# Au-delà des Toits de Londres",
+        "Leur voyage commença au-dessus de la Tamise. Sous eux, la ville s'étalait comme un labyrinthe d'ombres, illuminée par de faibles réverbères au gaz. Pour Wendy, c'était la première fois que le monde lui paraissait si vaste, et si libre.",
+        "Peter, lui, ne regardait pas en arrière. Il volait avec une assurance incroyable, un sourire carnassier aux lèvres, fonçant vers l'horizon où l'obscurité de la nuit semblait se déchirer.",
+        "— Plus vite, Wendy ! cria Peter. Deuxième étoile à droite, et tout droit jusqu'au matin !",
+        "https://images.unsplash.com/photo-1518020382113-a7e8fc38eac9?w=800",
+        "Ils traversèrent des nuages de coton et des vents glacés, escortés par les éclats de rage de Clochette, qui n'appréciait pas le rythme plus lent imposé par Wendy. Le temps n'existait plus. Combien de jours ? Combien d'heures ?",
+        "# Les Récifs de l'Imaginaire",
+        "Soudain, Peter ralentit. Une masse sombre et fantastique émergea des flots, là où le ciel et l'océan se confondaient.",
+        "— Regarde ! C'est Neverland !",
+        "Ce n'était pas un simple rivage. L'île semblait vivante, pulsant d'une énergie verte et sauvage. On aurait dit que l'imagination des enfants avait façonné chaque rocher, chaque arbre géant et chaque lagon bleu turquoise qui scintillait sous la lune.",
+        "https://images.unsplash.com/photo-1549421833-289b4f9973f6?w=800",
+        "# Le Chant des Sirenes et le Canon des Pirates",
+        "Leurs premières émotions de pure merveille furent brisées par un son sinistre : le *boum* lourd et résonnant d'un coup de canon.",
+        "— C'est le Jolly Roger ! Capitaine Crochet et ses pirates !",
+        "Peter attrapa la main de Wendy et plongea en piqué, Clochette en éclaireur. Derrière eux, des boulets de canon déchiraient les nuages, les manquant de peu. L'aventure n'était pas un rêve. C'était un combat.",
+        "— N'aie pas peur, Wendy ! ricana Peter. Ici, c'est nous qui faisons les règles !",
+        "Et ils s'enfoncèrent dans l'épaisse jungle de Neverland, là où la magie et le danger s'entrelacent pour l'éternité.",
+        "Fin du chapitre 2"
       ]
     }
   ]
@@ -40,7 +75,7 @@ export const PUBLIC_STORIES = [
   id: "alice-01",
   title: "Alice au pays des merveilles",
   author: "Lewis Carroll",
-  coverImage: "https://images.unsplash.com/photo-1504198458649-3128b932f49b?w=500",
+  coverImage: "https://res.cloudinary.com/dn9c4ctav/image/upload/v1777506601/1777506532816_kdlkxd.png",
   genres: ["fantastique"],
   viewsCount: 2200,
   likesCount: 940,
@@ -118,7 +153,7 @@ export const PUBLIC_STORIES = [
   id: "dracula-01",
   title: "Dracula",
   author: "Bram Stoker",
-  coverImage: "https://images.unsplash.com/photo-1509248961158-e54f6934749c?w=500",
+  coverImage: "https://res.cloudinary.com/dn9c4ctav/image/upload/v1777506808/1777506770852_fkiiog.png",
   genres: ["horreur"],
   viewsCount: 2800,
   likesCount: 1200,
@@ -127,7 +162,7 @@ export const PUBLIC_STORIES = [
       id: 0,
       title: "Chapitre 1 - Le château",
       pages: [
-        "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800",
+        "https://res.cloudinary.com/dn9c4ctav/image/upload/v1777506808/1777506770852_fkiiog.png",
         "Jonathan arriva au château.",
         "Bienvenue...",
         "Fin du chapitre"
@@ -140,7 +175,7 @@ export const PUBLIC_STORIES = [
   id: "sherlock-01",
   title: "Sherlock Holmes",
   author: "Arthur Conan Doyle",
-  coverImage: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=500",
+  coverImage: "https://res.cloudinary.com/dn9c4ctav/image/upload/v1777507038/1777506999445_ez0nfl.png",
   genres: ["mystère"],
   viewsCount: 3000,
   likesCount: 1500,
@@ -161,7 +196,7 @@ export const PUBLIC_STORIES = [
   id: "frankenstein-01",
   title: "Frankenstein",
   author: "Mary Shelley",
-  coverImage: "https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=500",
+  coverImage: "https://res.cloudinary.com/dn9c4ctav/image/upload/v1777507353/1777507316216_hsizet.png",
   genres: ["horreur"],
   viewsCount: 2600,
   likesCount: 1100,
@@ -181,7 +216,7 @@ export const PUBLIC_STORIES = [
   id: "odyssey-01",
   title: "L'Odyssée",
   author: "Homère",
-  coverImage: "https://images.unsplash.com/photo-1526318472351-bc6f2e2c1c1f?w=500",
+  coverImage: "https://res.cloudinary.com/dn9c4ctav/image/upload/v1777508116/1777508045519_wshhqi.png",
   genres: ["mythologie"],
   viewsCount: 3200,
   likesCount: 1700,
@@ -201,7 +236,7 @@ export const PUBLIC_STORIES = [
   id: "heritier-01",
   title: "Les Héritiers de l’Oubli",
   author: "ComicCrafte Studio",
-  coverImage: "https://images.unsplash.com/photo-1614728263952-84ea256f9679?w=500",
+  coverImage: "https://res.cloudinary.com/dn9c4ctav/image/upload/v1772150811/1762552814369_tdmwse.png",
   genres: ["dark fantasy"],
   viewsCount: 0,
   likesCount: 0,
@@ -221,41 +256,9 @@ export const PUBLIC_STORIES = [
       pages: [
         "La vérité revient.",
         "Fin du chapitre"
-      ]
-    }
-  ]
-},
+              ]
+    } 
+  ] 
+} 
 
-/* ===================== AUTO GENERATION (40 STORIES) ===================== */
-
-...Array.from({ length: 40 }).map((_, i) => ({
-  id: `story-${i}`,
-  title: `Histoire ${i + 1}`,
-  author: i % 2 === 0 ? "ComicCrafte Studio" : "Auteur Classique",
-  coverImage: `https://picsum.photos/seed/${i}/500/700`,
-  genres: ["aventure", "fantasy"],
-  viewsCount: Math.floor(Math.random() * 5000),
-  likesCount: Math.floor(Math.random() * 2000),
-  chapters: [
-    {
-      id: 0,
-      title: "Chapitre 1",
-      pages: [
-        `Début de l’histoire ${i + 1}`,
-        `Un événement mystérieux survient.`,
-        `Fin du chapitre`
-      ]
-    },
-    {
-      id: 1,
-      title: "Chapitre 2",
-      pages: [
-        `Le héros agit.`,
-        `Une bataille commence.`,
-        `Fin du chapitre`
-      ]
-    }
-  ]
-}))
-
-];
+]; 
