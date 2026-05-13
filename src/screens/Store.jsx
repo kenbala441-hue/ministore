@@ -1,6 +1,7 @@
 import { doc, updateDoc, increment } from "firebase/firestore";
-import { db } from "../../firebase/index.js";
-import { useUserContext } from "./userContext";
+import { db } from "../firebase/index.js";
+import { useUserContext } from "./users/userContext";
+
 import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
