@@ -1,149 +1,392 @@
 import React, { useEffect } from "react";
 
-/**
- * 🔥 MESSAGING SPLASH V2 — Premium Transition
- * Ce composant gère la transition visuelle vers la messagerie.
- * Il inclut une animation fluide et un message clair pour l'utilisateur.
- */
 export default function MessagingSplash({ onComplete }) {
-  
-  // Règle des 3 secondes (comme mentionné dans tes principes de design)
+
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (onComplete) onComplete(); // Appelle la fonction pour afficher le chat
-    }, 2800); // 2.8 secondes pour l'animation
+      onComplete?.();
+    }, 3200);
 
-    return () => clearTimeout(timer); // Nettoyage si le composant est démonté
+    return () => clearTimeout(timer);
   }, [onComplete]);
 
   return (
     <>
-      {/* 1. STYLES CSS ANIMÉS (Inline pour éviter les fichiers extra) */}
       <style>{`
-        @keyframes logoPop {
-          0% { transform: scale(0.5); opacity: 0; filter: blur(10px); }
-          50% { transform: scale(1.1); opacity: 1; filter: blur(0px); }
-          100% { transform: scale(1); opacity: 1; }
+
+        @keyframes cinematicIntro {
+          0% {
+            opacity: 0;
+            transform: scale(1.12);
+            filter: blur(25px);
+          }
+
+          100% {
+            opacity: 1;
+            transform: scale(1);
+            filter: blur(0px);
+          }
         }
 
-        @keyframes textFadeUp {
-          0% { transform: translateY(15px); opacity: 0; }
-          100% { transform: translateY(0); opacity: 0.8; }
+        @keyframes floatingLogo {
+          0%,100% {
+            transform: translateY(0px);
+          }
+
+          50% {
+            transform: translateY(-8px);
+          }
         }
 
-        @keyframes fluidGlow {
-          0% { box-shadow: 0 0 20px rgba(0, 255, 127, 0.3); }
-          50% { box-shadow: 0 0 40px rgba(0, 255, 127, 0.6); }
-          100% { box-shadow: 0 0 20px rgba(0, 255, 127, 0.3); }
+        @keyframes logoGlow {
+          0% {
+            box-shadow:
+              0 0 10px rgba(0,229,255,0.1),
+              0 0 30px rgba(124,58,237,0.1);
+          }
+
+          50% {
+            box-shadow:
+              0 0 40px rgba(0,229,255,0.45),
+              0 0 90px rgba(124,58,237,0.35);
+          }
+
+          100% {
+            box-shadow:
+              0 0 10px rgba(0,229,255,0.1),
+              0 0 30px rgba(124,58,237,0.1);
+          }
         }
 
-        @keyframes lineProgress {
-          0% { width: 0%; }
-          100% { width: 100%; }
+        @keyframes fadeSlide {
+          0% {
+            opacity: 0;
+            transform: translateY(18px);
+            letter-spacing: 8px;
+          }
+
+          100% {
+            opacity: 1;
+            transform: translateY(0);
+            letter-spacing: 1px;
+          }
         }
+
+        @keyframes progressLoad {
+          0% {
+            width: 0%;
+          }
+
+          100% {
+            width: 100%;
+          }
+        }
+
+        @keyframes movingGlow {
+          0% {
+            transform: translateX(-120%);
+          }
+
+          100% {
+            transform: translateX(220%);
+          }
+        }
+
+        @keyframes backgroundMove {
+          0% {
+            background-position: 0% 50%;
+          }
+
+          50% {
+            background-position: 100% 50%;
+          }
+
+          100% {
+            background-position: 0% 50%;
+          }
+        }
+
       `}</style>
 
-      {/* 2. STRUCTURE UI */}
       <div style={s.container}>
-        {/* Conteneur centralisé pour le logo et le texte */}
+
+        {/* BACKGROUND FX */}
+        <div style={s.bgGlowOne} />
+        <div style={s.bgGlowTwo} />
+
+        {/* CENTER */}
         <div style={s.content}>
-          {/* LOGO "C" ANIMÉ */}
-          <div style={s.logoCircle}>
-            <span style={s.logoChar}>C</span>
+
+          {/* LOGO */}
+          <div style={s.logoWrap}>
+
+            <div style={s.logoBorder}>
+              <div style={s.logoInner}>
+                <span style={s.logoText}>C</span>
+              </div>
+            </div>
+
           </div>
 
-          {/* NOM DE MARQUE */}
-          <h1 style={s.brandName}>
-            ComicCrafte <span style={s.brandSub}>Messaging</span>
+          {/* BRAND */}
+          <h1 style={s.brand}>
+            Comic<span style={s.brandAccent}>Crafte</span>
           </h1>
 
-          {/* MESSAGE DE TRANSITION (Fade in) */}
-          <p style={s.transitionMessage}>
-            Ouverture de votre espace de discussion...
+          {/* SUB */}
+          <div style={s.sub}>
+            Messaging Experience
+          </div>
+
+          {/* TEXT */}
+          <p style={s.text}>
+            Préparation de votre espace de discussion immersif...
           </p>
+
         </div>
 
-        {/* BARRE DE PROGRESSION INFÉRIEURE (Animation fluide) */}
-        <div style={s.progressContainer}>
-          <div style={s.progressBar}></div>
+        {/* PROGRESS */}
+        <div style={s.progressBox}>
+          <div style={s.progress}>
+            <div style={s.progressFx} />
+          </div>
         </div>
+
       </div>
     </>
   );
 }
 
-/* 3. STYLES JS (Couleurs fluides & Néon) */
 const s = {
+
   container: {
+    position: "fixed",
+    inset: 0,
+    width: "100%",
+    height: "100vh",
+
+    overflow: "hidden",
+
     display: "flex",
     flexDirection: "column",
     justifyContent: "center",
     alignItems: "center",
-    height: "100vh",
-    width: "100vw",
-    backgroundColor: "#050505", // Noir profond
-    fontFamily: "'Segoe UI', Roboto, sans-serif",
-    position: "fixed",
-    top: 0,
-    left: 0,
-    zIndex: 9999, // S'assure d'être au-dessus de tout
+
+    background:
+      "linear-gradient(-45deg,#020202,#07111d,#090014,#020202)",
+
+    backgroundSize: "400% 400%",
+    animation: "backgroundMove 10s ease infinite",
+
+    zIndex: 999999,
+
+    fontFamily:
+      "'Inter','Segoe UI',sans-serif"
   },
-  content: {
-    textAlign: "center",
-    marginBottom: "50px", // Espace pour la barre de progression
-  },
-  logoCircle: {
-    width: "90px",
-    height: "90px",
+
+  bgGlowOne: {
+    position: "absolute",
+    top: "-120px",
+    right: "-80px",
+
+    width: "260px",
+    height: "260px",
+
     borderRadius: "50%",
-    border: "3px solid #00ff7f", // Néon Vert Comic
+
+    background:
+      "rgba(0,229,255,0.12)",
+
+    filter: "blur(90px)"
+  },
+
+  bgGlowTwo: {
+    position: "absolute",
+    bottom: "-100px",
+    left: "-70px",
+
+    width: "240px",
+    height: "240px",
+
+    borderRadius: "50%",
+
+    background:
+      "rgba(124,58,237,0.16)",
+
+    filter: "blur(90px)"
+  },
+
+  content: {
+    position: "relative",
+    zIndex: 2,
+
+    textAlign: "center",
+
+    padding: "0 24px",
+
+    animation:
+      "cinematicIntro 1.1s ease forwards"
+  },
+
+  logoWrap: {
+    marginBottom: "28px",
+
+    display: "flex",
+    justifyContent: "center",
+
+    animation:
+      "floatingLogo 4s ease-in-out infinite"
+  },
+
+  logoBorder: {
+    width: "108px",
+    height: "108px",
+
+    borderRadius: "34px",
+
+    padding: "2px",
+
+    background:
+      "linear-gradient(135deg,#00e5ff,#7c3aed,#00e5ff)",
+
+    animation:
+      "logoGlow 3s ease-in-out infinite",
+  },
+
+  logoInner: {
+    width: "100%",
+    height: "100%",
+
+    borderRadius: "32px",
+
+    background:
+      "rgba(5,5,10,0.95)",
+
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    margin: "0 auto 25px auto",
-    backgroundColor: "#000",
-    animation: "logoPop 1s ease-out forwards, fluidGlow 2s infinite ease-in-out",
+
+    backdropFilter: "blur(12px)"
   },
-  logoChar: {
-    fontSize: "50px",
-    fontWeight: "bold",
-    color: "#00ff7f", // Néon Vert
-    textShadow: "0 0 10px rgba(0, 255, 127, 0.7)",
+
+  logoText: {
+    fontSize: "58px",
+    fontWeight: "900",
+
+    background:
+      "linear-gradient(135deg,#00e5ff,#7c3aed)",
+
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent",
+
+    textShadow:
+      "0 0 25px rgba(0,229,255,0.35)"
   },
-  brandName: {
+
+  brand: {
     margin: 0,
-    fontSize: "24px",
-    fontWeight: "bold",
+
+    fontSize: "30px",
+    fontWeight: "900",
+
     color: "#fff",
-    letterSpacing: "1px",
-    animation: "textFadeUp 0.8s ease-out 0.5s forwards",
-    opacity: 0, // Commence invisible
+
+    animation:
+      "fadeSlide 1s ease 0.3s forwards",
+
+    opacity: 0
   },
-  brandSub: {
-    color: "#ff0055", // Rose Néon (Style Facebook Pro/Comic)
-    fontWeight: "normal",
-    textShadow: "0 0 10px rgba(255, 0, 85, 0.5)",
+
+  brandAccent: {
+    background:
+      "linear-gradient(135deg,#00e5ff,#7c3aed)",
+
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent"
   },
-  transitionMessage: {
-    marginTop: "12px",
+
+  sub: {
+    marginTop: "10px",
+
+    fontSize: "11px",
+    fontWeight: "700",
+
+    color: "rgba(255,255,255,0.5)",
+
+    letterSpacing: "5px",
+    textTransform: "uppercase",
+
+    animation:
+      "fadeSlide 1s ease 0.55s forwards",
+
+    opacity: 0
+  },
+
+  text: {
+    marginTop: "18px",
+
+    color: "#b8bcc8",
+
     fontSize: "14px",
-    color: "#aaa",
-    animation: "textFadeUp 0.8s ease-out 1.1s forwards",
-    opacity: 0, // Commence invisible
+    lineHeight: 1.5,
+
+    maxWidth: "290px",
+
+    animation:
+      "fadeSlide 1s ease 0.9s forwards",
+
+    opacity: 0
   },
-  progressContainer: {
+
+  progressBox: {
     position: "absolute",
-    bottom: "40px",
-    width: "250px",
+
+    bottom: "42px",
+
+    width: "240px",
     height: "4px",
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    borderRadius: "2px",
+
+    borderRadius: "999px",
+
     overflow: "hidden",
+
+    background:
+      "rgba(255,255,255,0.08)",
+
+    backdropFilter: "blur(10px)"
   },
-  progressBar: {
+
+  progress: {
+    position: "relative",
+
     height: "100%",
-    background: "linear-gradient(90deg, #00ff7f 0%, #00f5d4 50%, #ff0055 100%)", // Dégradé fluide vert->bleu->rose
-    borderRadius: "2px",
-    animation: "lineProgress 2.8s linear forwards",
+    width: "100%",
+
+    borderRadius: "999px",
+
+    overflow: "hidden",
+
+    background:
+      "linear-gradient(90deg,#00e5ff,#7c3aed)",
+
+    animation:
+      "progressLoad 3.2s linear forwards"
   },
+
+  progressFx: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+
+    width: "45%",
+    height: "100%",
+
+    background:
+      "rgba(255,255,255,0.95)",
+
+    filter: "blur(10px)",
+
+    animation:
+      "movingGlow 1.3s linear infinite"
+  }
 };

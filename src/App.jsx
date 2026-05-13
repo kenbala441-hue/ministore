@@ -63,7 +63,9 @@ const AdminGuard = lazy(() => import("./screens/admin/layout/AdminGuard.jsx"));
 const AdminLayout = lazy(() => import("./screens/admin/layout/AdminLayout.jsx"));
 const Overview = lazy(() => import("./screens/admin/dashboard/Overview.jsx"));
 const Profile = lazy(() => import("./screens/users/UserProfile"));
-
+const AdminGate = lazy(() => import("./screens/admin/AdminGate"));
+const AdminChallenge = lazy(() => import("./screens/admin/AdminChallenge"));
+const AdminVault = lazy(() => import("./screens/admin/AdminVault"));
 function AppContent() {
   const { user, setUser } = useUserContext();
   const [authReady, setAuthReady] = useState(false);
@@ -77,140 +79,115 @@ function AppContent() {
   const [currentStory, setCurrentStory] = useState(null);
   const userStatus = "vip";
 
-  // ... ensuite tu peux mettre ton useEffect et handleGoogleLogin
-
-  // 🔹 Auth Listener principal
+  // 🔹 Auth Listener principal (CORRIGÉ : Protection Admin + Nettoyage syntaxe)
   useEffect(() => {
-  const unsub = onAuthStateChanged(auth, async (u) => {
-    try {
-      // 🔹 Mise à jour du contexte utilisateur
-      setUser(u || null);
-      setAuthReady(true);
+    const unsub = onAuthStateChanged(auth, async (u) => {
+      try {
+        setUser(u || null);
+        setAuthReady(true);
 
-      // 🔹 Pas connecté → écran login
-      if (!u) {
-        setView("login");
-        return;
-      }
+        // 🛡️ PROTECTION DU TUNNEL ADMIN
+        const adminViews = ["admin_gate", "admin_login", "admin_challenge", "admin_vault", "admin_dashboard"];
+        if (adminViews.includes(view)) return; 
 
-      // 🔹 Récupération des données utilisateur
-      const userRef = doc(db, "users", u.uid);
-      const docSnap = await getDoc(userRef);
-
-      // 🔹 Compte inexistant → profil à créer
-      if (!docSnap.exists()) {
-        setView("register");
-        return;
-      }
-
-      // 🔹 Données existantes
-      const data = docSnap.data() || {};
-
-      // 🔹 Navigation sécurisée selon statut
-      if (!data.acceptedTerms) {
-        setView("terms");
-      } else if (!data.completedProfile) {
-        setView("register");
-      } else {
-        switch (data.role) {
-          case "studio_author":
-            setView("studio_dashboard");
-            break;
-          case "author":
-            setView("author_dashboard");
-            break;
-          default:
-            setView("home");
-            break;
+        if (!u) {
+          setView("login");
+          return;
         }
+
+        const userRef = doc(db, "users", u.uid);
+        const docSnap = await getDoc(userRef);
+
+        if (!docSnap.exists()) {
+          setView("register");
+          return;
+        }
+
+        const data = docSnap.data() || {};
+
+        if (!data.acceptedTerms) {
+          setView("terms");
+        } else if (!data.completedProfile) {
+          setView("register");
+        } else {
+          // Navigation auto uniquement si on est sur l'écran login
+          if (view === "login") {
+            if (data.role === "studio_author") setView("studio_dashboard");
+            else if (data.role === "author") setView("author_dashboard");
+            else setView("home");
+          }
+        }
+      } catch (err) {
+        console.error("Erreur auth:", err);
+        if (view === "login") setView("home");
       }
+    });
 
-    } catch (err) {
-      console.error("Erreur auth:", err);
-      setView("home"); // fallback sécurisé
-    }
-  });
-
-  return () => unsub();
-}, []);
+    return () => unsub();
+  }, [view]); // Dépendance cruciale ici
 
   // 🔹 Splash control
   useEffect(() => {
     if (!authReady) return;
-    const minTimer = setTimeout(() => setSplashVisible(false), 1500);
-    const maxTimer = setTimeout(() => setSplashVisible(false), 6000);
-    return () => {
-      clearTimeout(minTimer);
-      clearTimeout(maxTimer);
-    };
+    const timer = setTimeout(() => setSplashVisible(false), 1500);
+    return () => clearTimeout(timer);
   }, [authReady]);
-//selectedStory
-useEffect(() => {
-  console.log("SELECTED STORY:", selectedStory);
-}, [selectedStory]);
+
+  // 🔹 Logs Debug (Optionnel)
+  useEffect(() => {
+    console.log("SELECTED STORY:", selectedStory);
+  }, [selectedStory]);
 
   // 🔹 Email login
   const handleLogin = async (email, password) => {
     try {
       const { user: u } = await signInWithEmailAndPassword(auth, email, password);
       setUser(u);
-
-      const userRef = doc(db, "users", u.uid);
-      const docSnap = await getDoc(userRef);
-
-      if (!docSnap.exists()) {
-        setView("register");
-        return;
-      }
-
-      const data = docSnap.data();
-      if (!data?.acceptedTerms) setView("terms");
-      else if (!data?.completedProfile) setView("register");
-      else setView("home");
     } catch (err) {
       console.error(err);
       alert("Erreur connexion");
     }
   };
 
-  // 🔹 Google login
-  const handleGoogleLogin = async () => {
-  if (googleLoginPending) return; // Empêche plusieurs clics
+const handleGoogleLogin = async () => {
+  if (googleLoginPending) return;
   setGoogleLoginPending(true);
 
   try {
     const { user: u } = await signInWithPopup(auth, googleProvider);
     setUser(u);
 
-    const userRef = doc(db, "users", u.uid);  
-    const docSnap = await getDoc(userRef);  
+    const userRef = doc(db, "users", u.uid);
+    const docSnap = await getDoc(userRef);
 
-    if (!docSnap.exists()) {  
-      await setDoc(userRef, {  
-        uid: u.uid,  
-        email: u.email,  
-        displayName: u.displayName || "",  
-        photoURL: u.photoURL || "",  
-        createdAt: serverTimestamp(),  
-        acceptedTerms: false,  
-        completedProfile: false,  
-        role: "user",  
-      });  
-      setView("register");  
-    } else {  
-      const data = docSnap.data();  
-      if (!data?.acceptedTerms) setView("terms");  
-      else if (!data?.completedProfile) setView("register");  
-      else {  
-        if (data?.role === "studio_author") setView("studio_dashboard");  
-        else if (data?.role === "author") setView("author_dashboard");  
-        else setView("home");  
-      }  
+    if (!docSnap.exists()) {
+      await setDoc(userRef, {
+        uid: u.uid,
+        email: u.email,
+        displayName: u.displayName || "",
+        photoURL: u.photoURL || "",
+        createdAt: serverTimestamp(),
+        acceptedTerms: false,
+        completedProfile: false,
+        role: "user",
+      });
+
+      setView("register");
+    } else {
+      const data = docSnap.data();
+
+      if (!data?.acceptedTerms) setView("terms");
+      else if (!data?.completedProfile) setView("register");
+      else {
+        if (data?.role === "studio_author") setView("studio_dashboard");
+        else if (data?.role === "author") setView("author_dashboard");
+        else setView("home");
+      }
     }
 
   } catch (err) {
     console.error("Erreur Google login :", err);
-    alert("Erreur Google login. Veuillez réessayer.");
+    alert("Erreur Google login.");
   } finally {
     setGoogleLoginPending(false);
   }
@@ -283,17 +260,36 @@ useEffect(() => {
               {view === "security_2fa" && <Security2FA setView={setView} />}
               {view === "security_center" && <SecurityCenter user={user} />}
 
-              {view === "admin_login" && <AdminLogin setView={setView} />}
-              {view === "admin_dashboard" && (
-                <>
-                  {!adminOk && <AdminGuard onSuccess={() => setAdminOk(true)} />}
-                  {adminOk && (
-                    <AdminLayout setView={setView}>
-                      <Overview />
-                    </AdminLayout>
-                  )}
-                </>
-              )}
+{/* 1. Écran d'avertissement initial */}
+{view === "admin_gate" && (
+  <AdminGate setView={setView} />
+)}
+
+{/* 2. Écran de la clé secrète (Master Key) */}
+{view === "admin_login" && (
+  <AdminLogin 
+    setView={setView} 
+    onVerified={() => setView("admin_challenge")} 
+  />
+)}
+
+{/* 3. Le Quiz de compétence (Admin Challenge) */}
+{view === "admin_challenge" && (
+  <AdminChallenge setView={setView} />
+)}
+
+{/* 4. Le Coffre-fort de validation (Admin Vault) */}
+{view === "admin_vault" && (
+  <AdminVault setView={setView} />
+)}
+
+{/* 5. Le Dashboard final (uniquement si tout est validé) */}
+{view === "admin_dashboard" && (
+  <AdminLayout setView={setView}>
+    <Overview />
+  </AdminLayout>
+)}
+
 
              {view === "author_intro" && <AuthorIntroScreen setView={setView} />}
 {view === "author_terms" && <AuthorTermsScreen setView={setView} />}

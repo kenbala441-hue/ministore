@@ -152,12 +152,18 @@ export default function BurgerMenu({ isOpen, close, user, setView, currentView }
 
           <div style={s.divider}></div>
 
-          {/* ADMIN */}
-          <div style={{ ...s.linkItem, ...activeStyle('admin_login') }} onClick={() => go('admin_login')}>
-            🛡️ <span style={s.linkText}>Administration</span>
-          </div>
+{/* 🛡️ Entrée sécurisée de l'administration */}
+<div 
+  style={{ ...s.linkItem, ...activeStyle('admin_gate') }} 
+  onClick={() => {
+    go('admin_gate'); // 👈 On vise la porte d'entrée, pas directement le login
+    close(); // N'oublie pas de fermer le menu burger
+  }}
+>
+  <span style={{ fontSize: '1.2rem' }}>🛡️</span>
+  <span style={s.linkText}>Administration</span>
+</div>
 
-          <div style={s.divider}></div>
 
           {/* SUPPORT */}
           <div style={{ ...s.linkItem, ...activeStyle('help') }} onClick={() => go('help')}>

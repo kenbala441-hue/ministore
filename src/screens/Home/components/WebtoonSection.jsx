@@ -1,108 +1,326 @@
 import React, { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  Flame,
+  Eye,
+  Grid2X2,
+  Rows3,
+  Sparkles,
+  ChevronRight
+} from "lucide-react";
+
 import { PUBLIC_STORIES } from "../../../data/publicStories";
 
+/**
+ * WEBTOON VERTICAL PREMIUM
+ * ✔ ultra compact
+ * ✔ fluide mobile
+ * ✔ scroll + grid dynamique
+ * ✔ bottom bar moderne
+ * ✔ animations propres
+ * ✔ design minimal premium
+ * ✔ optimisé performances
+ */
+
 export default function WebtoonVertical({
-  title = "🔥 Recommandé",
+  title = "Recommandé",
   filter = "popular",
   genre = null,
   setView,
-  setSelectedStory
+  setSelectedStory,
+  neonColor = "#00f7ff"
 }) {
-  const [isExpanded, setIsExpanded] = useState(false);
 
+  // =========================
+  // MODES
+  // =========================
+  const [gridMode, setGridMode] = useState(false);
+
+  // =========================
+  // DATA
+  // =========================
   const stories = useMemo(() => {
-    let data = Array.isArray(PUBLIC_STORIES) ? [...PUBLIC_STORIES] : [];
 
-    if (filter === "genre" && genre)
-      data = data.filter(s => s?.genres?.includes(genre));
+    let data = Array.isArray(PUBLIC_STORIES)
+      ? [...PUBLIC_STORIES]
+      : [];
 
-    if (filter === "popular")
-      data.sort((a, b) => (b?.viewsCount || 0) - (a?.viewsCount || 0));
+    // FILTER GENRE
+    if (filter === "genre" && genre) {
+      data = data.filter(
+        s => s?.genres?.includes(genre)
+      );
+    }
 
-    if (filter === "recent")
-      data = [...data].reverse();
+    // POPULAR
+    if (filter === "popular") {
+      data.sort(
+        (a, b) =>
+          (b?.viewsCount || 0) -
+          (a?.viewsCount || 0)
+      );
+    }
 
-    return isExpanded ? data : data.slice(0, 10);
-  }, [filter, genre, isExpanded]);
+    // RECENT
+    if (filter === "recent") {
+      data.reverse();
+    }
 
-  const handleOpen = (story) => {
+    return gridMode
+      ? data.slice(0, 18)
+      : data.slice(0, 12);
+
+  }, [filter, genre, gridMode]);
+
+  // =========================
+  // OPEN STORY
+  // =========================
+  const openStory = (story) => {
+
     if (!story) return;
+
     setSelectedStory?.(story);
     setView?.("reader");
+
+    try {
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+      });
+    } catch {
+      window.scrollTo(0, 0);
+    }
   };
 
-  if (!stories.length) return null;
+  // =========================
+  // EMPTY
+  // =========================
+  if (!stories.length) {
+    return (
+      <div style={s.empty}>
+        <Sparkles size={14} />
+        Les histoires arrivent bientôt
+      </div>
+    );
+  }
 
   return (
     <div style={s.container}>
-      {/* HEADER */}
+
+      {/* ================= HEADER ================= */}
+
       <div style={s.header}>
-        <div style={s.titleGroup}>
+
+        {/* LEFT */}
+        <div style={s.left}>
+
           <div
             style={{
               ...s.bar,
-              backgroundColor: isExpanded ? "#ff003c" : "#00f7ff"
+              background: neonColor
             }}
           />
-          <h3 style={s.title}>{title}</h3>
+
+          <div>
+
+            <h3 style={s.title}>
+              {title}
+            </h3>
+
+            <div style={s.subtitle}>
+              Stories populaires
+            </div>
+
+          </div>
         </div>
 
-        <span style={s.link} onClick={() => setIsExpanded(!isExpanded)}>
-          {isExpanded ? "RÉDUIRE" : "VOIR TOUT"}
-        </span>
+        {/* RIGHT */}
+        <div style={s.actions}>
+
+          <button
+            onClick={() => setGridMode(false)}
+            style={{
+              ...s.iconBtn,
+              background: !gridMode
+                ? neonColor
+                : "rgba(255,255,255,0.05)"
+            }}
+          >
+            <Rows3
+              size={13}
+              color={!gridMode ? "#000" : "#999"}
+            />
+          </button>
+
+          <button
+            onClick={() => setGridMode(true)}
+            style={{
+              ...s.iconBtn,
+              background: gridMode
+                ? neonColor
+                : "rgba(255,255,255,0.05)"
+            }}
+          >
+            <Grid2X2
+              size={13}
+              color={gridMode ? "#000" : "#999"}
+            />
+          </button>
+
+        </div>
       </div>
 
-      {/* CONTENT */}
+      {/* ================= CONTENT ================= */}
+
       <motion.div
         layout
-        style={isExpanded ? s.grid : s.scroll}
+        style={
+          gridMode
+            ? s.grid
+            : s.scroll
+        }
       >
+
         <AnimatePresence>
+
           {stories.map((story, index) => (
+
             <motion.div
               key={story?.id || index}
               layout
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              whileTap={{ scale: 0.96 }}
-              style={isExpanded ? s.cardGrid : s.cardScroll}
-              onClick={() => handleOpen(story)}
+              initial={{
+                opacity: 0,
+                scale: 0.96
+              }}
+              animate={{
+                opacity: 1,
+                scale: 1
+              }}
+              exit={{
+                opacity: 0
+              }}
+              transition={{
+                duration: 0.18
+              }}
+              whileTap={{
+                scale: 0.96
+              }}
+              style={
+                gridMode
+                  ? s.cardGrid
+                  : s.cardScroll
+              }
+              onClick={() => openStory(story)}
             >
+
               {/* IMAGE */}
-              <div style={isExpanded ? s.imgGrid : s.imgScroll}>
-                <img src={story?.coverImage} alt="" style={s.img} />
-                <div style={s.rank}>{index + 1}</div>
+
+              <div
+                style={
+                  gridMode
+                    ? s.imageGrid
+                    : s.imageScroll
+                }
+              >
+
+                <img
+                  src={
+                    story?.coverImage ||
+                    "https://via.placeholder.com/300x450/111/222?text=Story"
+                  }
+                  alt={story?.title}
+                  loading="lazy"
+                  style={s.image}
+                />
+
+                {/* OVERLAY */}
+                <div style={s.overlay} />
+
+                {/* RANK */}
+                {index < 3 && (
+                  <div
+                    style={{
+                      ...s.rank,
+                      background: neonColor
+                    }}
+                  >
+                    <Flame size={8} />
+                    {index + 1}
+                  </div>
+                )}
+
               </div>
 
               {/* INFO */}
+
               <div style={s.info}>
-                <div style={s.titleStory}>{story?.title}</div>
-                <div style={s.meta}>★ {story?.viewsCount || 0}</div>
+
+                <div style={s.storyTitle}>
+                  {story?.title || "Story"}
+                </div>
+
+                <div style={s.metaRow}>
+
+                  <span style={s.views}>
+                    <Eye size={9} />
+                    {story?.viewsCount || 0}
+                  </span>
+
+                  <ChevronRight
+                    size={11}
+                    color="#555"
+                  />
+
+                </div>
+
               </div>
+
             </motion.div>
+
           ))}
+
         </AnimatePresence>
+
       </motion.div>
+
+      {/* ================= BOTTOM BAR ================= */}
+
+      <div style={s.bottomBar}>
+
+        <div style={s.bottomGlow} />
+
+        <span style={s.bottomText}>
+          {stories.length} histoires affichées
+        </span>
+
+      </div>
+
     </div>
   );
 }
 
+/* =========================
+   STYLES
+========================= */
+
 const s = {
+
   container: {
-    margin: "15px 0",
-    width: "100%"
+    width: "100%",
+    margin: "12px 0 20px"
   },
+
+  /* HEADER */
 
   header: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: "0 15px",
-    marginBottom: "12px"
+    padding: "0 12px",
+    marginBottom: "10px"
   },
 
-  titleGroup: {
+  left: {
     display: "flex",
     alignItems: "center",
     gap: "8px"
@@ -110,102 +328,205 @@ const s = {
 
   bar: {
     width: "3px",
-    height: "14px",
-    borderRadius: "2px"
+    height: "16px",
+    borderRadius: "20px"
   },
 
   title: {
     color: "#fff",
-    fontSize: "14px",
-    fontWeight: "900"
-  },
-
-  link: {
-    fontSize: "10px",
-    color: "#00f7ff",
+    fontSize: "13px",
     fontWeight: "800",
-    cursor: "pointer"
+    margin: 0
   },
 
-  /* 🔥 SCROLL MODE (IMPORTANT) */
+  subtitle: {
+    color: "#666",
+    fontSize: "9px",
+    marginTop: "1px"
+  },
+
+  actions: {
+    display: "flex",
+    alignItems: "center",
+    gap: "6px"
+  },
+
+  iconBtn: {
+    width: "28px",
+    height: "28px",
+    border: "none",
+    borderRadius: "10px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    backdropFilter: "blur(10px)"
+  },
+
+  /* SCROLL */
+
   scroll: {
     display: "flex",
     overflowX: "auto",
     gap: "10px",
-    padding: "0 15px 10px",
+    padding: "0 12px 8px",
+    scrollbarWidth: "none",
     WebkitOverflowScrolling: "touch"
   },
 
   cardScroll: {
-    flex: "0 0 140px", // 🔥 CRUCIAL pour scroll
-    display: "flex",
-    flexDirection: "column",
-    gap: "6px"
+    flex: "0 0 92px",
+    cursor: "pointer"
   },
 
-  imgScroll: {
-    width: "140px",
-    height: "180px",
-    borderRadius: "8px",
+  imageScroll: {
+    width: "92px",
+    height: "125px",
+    borderRadius: "12px",
     overflow: "hidden",
-    position: "relative"
+    position: "relative",
+    background: "#111"
   },
 
-  /* 🔥 GRID MODE */
+  /* GRID */
+
   grid: {
     display: "grid",
-    gridTemplateColumns: "repeat(3, 1fr)",
+    gridTemplateColumns:
+      "repeat(auto-fill,minmax(78px,1fr))",
     gap: "10px",
-    padding: "0 15px"
+    padding: "0 12px"
   },
 
   cardGrid: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "4px"
+    cursor: "pointer"
   },
 
-  imgGrid: {
+  imageGrid: {
     width: "100%",
-    aspectRatio: "2/3",
-    borderRadius: "6px",
+    aspectRatio: "0.72",
+    borderRadius: "12px",
     overflow: "hidden",
-    position: "relative"
+    position: "relative",
+    background: "#111"
   },
 
-  img: {
+  /* IMAGE */
+
+  image: {
     width: "100%",
     height: "100%",
-    objectFit: "cover"
+    objectFit: "cover",
+    display: "block"
   },
+
+  overlay: {
+    position: "absolute",
+    inset: 0,
+    background:
+      "linear-gradient(to top, rgba(0,0,0,0.65), transparent 45%)"
+  },
+
+  /* BADGES */
 
   rank: {
     position: "absolute",
-    top: 0,
-    left: 0,
-    background: "#00f7ff",
+    top: "5px",
+    left: "5px",
+    display: "flex",
+    alignItems: "center",
+    gap: "3px",
+    padding: "3px 6px",
+    borderRadius: "20px",
     color: "#000",
     fontSize: "8px",
-    fontWeight: "900",
-    padding: "2px 6px",
-    borderBottomRightRadius: "6px"
+    fontWeight: "900"
   },
+
+  /* INFO */
 
   info: {
-    overflow: "hidden"
+    marginTop: "5px"
   },
 
-  titleStory: {
-    fontSize: "11px",
-    fontWeight: "700",
-    color: "#eee",
-    whiteSpace: "nowrap",
-    overflow: "hidden",
-    textOverflow: "ellipsis"
-  },
-
-  meta: {
+  storyTitle: {
+    color: "#f2f2f2",
     fontSize: "9px",
-    color: "#777"
+    fontWeight: "700",
+    lineHeight: "1.25",
+
+    display: "-webkit-box",
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: "vertical",
+    overflow: "hidden",
+
+    minHeight: "22px"
+  },
+
+  metaRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: "4px"
+  },
+
+  views: {
+    display: "flex",
+    alignItems: "center",
+    gap: "3px",
+    color: "#777",
+    fontSize: "8px",
+    fontWeight: "700"
+  },
+
+  /* BOTTOM BAR */
+
+  bottomBar: {
+    position: "relative",
+    marginTop: "14px",
+    marginInline: "12px",
+    height: "32px",
+    borderRadius: "14px",
+    overflow: "hidden",
+
+    background:
+      "rgba(255,255,255,0.04)",
+
+    border:
+      "1px solid rgba(255,255,255,0.04)",
+
+    backdropFilter: "blur(12px)",
+
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+
+  bottomGlow: {
+    position: "absolute",
+    width: "40%",
+    height: "100%",
+    background:
+      "linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)",
+    animation: "shine 4s linear infinite"
+  },
+
+  bottomText: {
+    position: "relative",
+    color: "#888",
+    fontSize: "9px",
+    fontWeight: "700",
+    letterSpacing: "0.3px"
+  },
+
+  /* EMPTY */
+
+  empty: {
+    margin: "15px",
+    padding: "14px",
+    borderRadius: "14px",
+    background: "#111",
+    color: "#666",
+    fontSize: "11px",
+    textAlign: "center"
   }
 };

@@ -17,6 +17,8 @@ import TrendingScroll from "../components/TrendingScroll";
 import NewStory from "../components/NewStory";
 import NewsCard from "../components/NewsCard";
 import PublicStoriesSection from "../components/PublicStoriesSection";
+import { StorySpotlight } from "../components/StorySpotlight";
+
 import GenreScroll from "../components/GenreScroll";
 import MythologySection from "../components/MythologySection";
 import VerticalSection from "../components/VerticalSection";
@@ -196,7 +198,6 @@ export default function Home({ setView, setSelectedStory, setSelectedUser, toggl
   setView={setView} 
   setSelectedStory={handleSelectStory} 
 />
-
       {/* TRENDING SCROLL */}
       <Section title="🔥 Tendances" color="#FFD700" showVoirTout onVoirTout={() => setView("series")}>
         <TrendingScroll
@@ -218,16 +219,6 @@ export default function Home({ setView, setSelectedStory, setSelectedUser, toggl
         neonColor={neonColor}
       />
 
-
-      {/* GENRES */}
-      <div style={{ marginTop: 12 }}>
-        <GenreScroll
-          genres={GENRES}
-          activeGenre={activeGenre}
-          setActiveGenre={setActiveGenre}
-          neonColor={neonColor}
-        />
-      </div>
 
 {/* REMPLACE TOUT CE BLOC DANS TON INDEX */}
 <FablesGrid
@@ -251,6 +242,16 @@ export default function Home({ setView, setSelectedStory, setSelectedUser, toggl
           ))}
         </div>
       </Section>
+      
+            {/* GENRES */}
+      <div style={{ marginTop: 12 }}>
+        <GenreScroll
+          genres={GENRES}
+          activeGenre={activeGenre}
+          setActiveGenre={setActiveGenre}
+          neonColor={neonColor}
+        />
+      </div>
       {/* COMMUNITY */}
       <PublicStoriesSection
         setSelectedStory={handleSelectStory}
@@ -292,7 +293,13 @@ export default function Home({ setView, setSelectedStory, setSelectedUser, toggl
           neonColor={neonColor}
         />
       </Section>
-      
+      <StorySpotlight 
+  label="NOUVELLE SPÉCIALE"
+  story={PUBLIC_STORIES[0]} // Prend la première histoire
+  setSelectedStory={setSelectedStory}
+  setView={setView}
+/>
+
       {/* NEWS */}
       <Section title="📰 Actu Studio" color={neonColor}>
         <NewsCard

@@ -1,151 +1,473 @@
 import React, { useState, useMemo } from "react";
-import { FABLES_DATABASE } from "../../../data/fablesDatabase";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  Sparkles,
+  ScrollText,
+  Globe2,
+  Flame,
+  Ghost,
+  Castle,
+  Trees,
+} from "lucide-react";
 
-export default function MythologySection({ setView, setSelectedStory }) {
+import { FABLES_DATABASE } from "../../../data/fablesDatabase";
+
+export default function MythologySection({
+  setView,
+  setSelectedStory,
+}) {
   const [activeTab, setActiveTab] = useState("Tous");
 
-  const categories = ["Tous", "Contes de Fées", "Mythologie", "Légende Africaine", "Légendes Urbaines"];
+  // 🌍 CATÉGORIES ÉTENDUES
+  const categories = [
+    {
+      name: "Tous",
+      icon: <Globe2 size={12} />,
+      color: "#00ffe1",
+    },
+    {
+      name: "Contes de Fées",
+      icon: <Sparkles size={12} />,
+      color: "#ffb4ff",
+    },
+    {
+      name: "Mythologie",
+      icon: <ScrollText size={12} />,
+      color: "#00d9ff",
+    },
+    {
+      name: "Légende Africaine",
+      icon: <Flame size={12} />,
+      color: "#ff9f43",
+    },
+    {
+      name: "Légendes Urbaines",
+      icon: <Ghost size={12} />,
+      color: "#ff5c5c",
+    },
+    {
+      name: "Mythologie Japonaise",
+      icon: <Castle size={12} />,
+      color: "#ff4d6d",
+    },
+    {
+      name: "Folklore Coréen",
+      icon: <Trees size={12} />,
+      color: "#7effa1",
+    },
+    {
+      name: "Mythologie Nordique",
+      icon: <Flame size={12} />,
+      color: "#7ad7ff",
+    },
+    {
+      name: "Légendes Chinoises",
+      icon: <Sparkles size={12} />,
+      color: "#ffd166",
+    },
+    {
+      name: "Mythologie Grecque",
+      icon: <ScrollText size={12} />,
+      color: "#b892ff",
+    },
+    {
+      name: "Légendes Arabes",
+      icon: <Ghost size={12} />,
+      color: "#00ffa3",
+    },
+    {
+      name: "Folklore Indien",
+      icon: <Sparkles size={12} />,
+      color: "#ff7b54",
+    },
+  ];
 
+  // 🔥 FILTRAGE SAFE
   const filteredFables = useMemo(() => {
-    const data = activeTab === "Tous" ? FABLES_DATABASE : FABLES_DATABASE.filter(f => f.category === activeTab);
-    return data.slice(0, 12); // On limite pour la performance
+    if (activeTab === "Tous") {
+      return FABLES_DATABASE.slice(0, 18);
+    }
+
+    return FABLES_DATABASE.filter(
+      (f) =>
+        f?.category?.toLowerCase() ===
+        activeTab.toLowerCase()
+    ).slice(0, 18);
   }, [activeTab]);
 
-  const handleOpen = (fable) => {
-    setSelectedStory(fable);
-    setView("reader");
-    window.scrollTo(0, 0);
+  // 📖 OPEN STORY
+  const openStory = (story) => {
+    if (!story) return;
+
+    setSelectedStory?.(story);
+    setView?.("reader");
+
+    try {
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    } catch {
+      window.scrollTo(0, 0);
+    }
   };
 
   return (
-    <div style={s.container}>
-      {/* HEADER ÉPURÉ */}
+    <section style={s.container}>
+
+      {/* HEADER */}
       <div style={s.header}>
-        <div style={s.accent} />
-        <h3 style={s.title}>🌌 MYTHES & <span style={{ color: "#00f7ff" }}>LÉGENDES</span></h3>
+        <div style={s.headerGlow} />
+
+        <div style={s.headerLeft}>
+          <div style={s.accentBar} />
+
+          <div>
+            <h2 style={s.title}>
+              🌌 Mythes & Légendes
+            </h2>
+
+            <p style={s.subtitle}>
+              Explore les récits oubliés du monde
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* TABS STYLÉES */}
-      <div style={s.tabScroll}>
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setActiveTab(cat)}
-            style={{
-              ...s.tab,
-              background: activeTab === cat ? "linear-gradient(135deg, #00f7ff, #005f73)" : "#111",
-              color: activeTab === cat ? "#000" : "#666",
-              border: activeTab === cat ? "none" : "1px solid #222"
-            }}
-          >
-            {cat}
-          </button>
-        ))}
+      {/* TABS */}
+      <div style={s.tabsWrapper}>
+        {categories.map((cat) => {
+          const active = activeTab === cat.name;
+
+          return (
+            <motion.button
+              key={cat.name}
+              whileTap={{ scale: 0.96 }}
+              onClick={() => setActiveTab(cat.name)}
+              style={{
+                ...s.tab,
+                background: active
+                  ? `linear-gradient(135deg, ${cat.color}, rgba(255,255,255,0.08))`
+                  : "rgba(255,255,255,0.04)",
+
+                border: active
+                  ? `1px solid ${cat.color}`
+                  : "1px solid rgba(255,255,255,0.05)",
+
+                color: active ? "#000" : "#ddd",
+
+                boxShadow: active
+                  ? `0 0 18px ${cat.color}55`
+                  : "none",
+              }}
+            >
+              {cat.icon}
+              {cat.name}
+            </motion.button>
+          );
+        })}
       </div>
 
-      {/* SCROLL HORIZONTAL (FINI LA GRID IMMENSE) */}
+      {/* EMPTY */}
+      {filteredFables.length === 0 && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          style={s.emptyBox}
+        >
+          <h4 style={s.emptyTitle}>
+            🚧 Histoires bientôt disponibles
+          </h4>
+
+          <p style={s.emptyText}>
+            Ce type d'histoire sera bientôt ajouté
+            sur la plateforme ComicCrafte.
+          </p>
+        </motion.div>
+      )}
+
+      {/* STORIES */}
       <div style={s.scrollArea}>
-        <AnimatePresence mode="wait">
+        <AnimatePresence>
           {filteredFables.map((fable, i) => (
             <motion.div
               key={fable.id}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.05 }}
-              onClick={() => handleOpen(fable)}
+              initial={{
+                opacity: 0,
+                y: 20,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+              }}
+              transition={{
+                duration: 0.2,
+                delay: i * 0.03,
+              }}
+              whileTap={{ scale: 0.97 }}
               style={s.card}
+              onClick={() => openStory(fable)}
             >
-              <div style={s.imgBox}>
-                <img src={fable.coverImage} alt="" style={s.img} />
-                <div style={s.overlay}>
-                  <span style={s.catBadge}>{fable.category?.split(' ')[0]}</span>
+              {/* IMAGE */}
+              <div style={s.imageBox}>
+                <img
+                  src={fable.coverImage}
+                  alt={fable.title}
+                  loading="lazy"
+                  style={s.image}
+                />
+
+                {/* OVERLAY */}
+                <div style={s.overlay} />
+
+                {/* BADGE */}
+                <div style={s.badge}>
+                  {fable.category?.split(" ")[0] || "Mythe"}
                 </div>
+
+                {/* NOUVEAU */}
+                {i < 3 && (
+                  <div style={s.newBadge}>
+                    NEW
+                  </div>
+                )}
               </div>
-              <h4 style={s.fableTitle}>{fable.title}</h4>
-              <p style={s.fableAuthor}>Par {fable.author || "Anonyme"}</p>
+
+              {/* TEXT */}
+              <div style={s.textBox}>
+                <h4 style={s.storyTitle}>
+                  {fable.title}
+                </h4>
+
+                <p style={s.author}>
+                  {fable.author || "Anonyme"}
+                </p>
+              </div>
             </motion.div>
           ))}
         </AnimatePresence>
       </div>
-    </div>
+    </section>
   );
 }
 
+/* =========================
+   🌌 REVOLUTION UI
+========================= */
+
 const s = {
-  container: { padding: "10px 0", background: "transparent" },
-  header: { padding: "0 15px", marginBottom: "15px", display: "flex", alignItems: "center", gap: "8px" },
-  accent: { width: "4px", height: "16px", backgroundColor: "#00f7ff", borderRadius: "10px" },
-  title: { color: "#fff", fontSize: "15px", fontWeight: "900", letterSpacing: "0.5px" },
-  
-  tabScroll: {
+  container: {
+    width: "100%",
+    margin: "14px 0",
+    position: "relative",
+  },
+
+  header: {
+    position: "relative",
+    padding: "0 14px",
+    marginBottom: "14px",
+  },
+
+  headerGlow: {
+    position: "absolute",
+    top: -10,
+    left: 0,
+    width: "100%",
+    height: 60,
+    background:
+      "linear-gradient(90deg, rgba(0,255,225,0.08), transparent)",
+    filter: "blur(20px)",
+    pointerEvents: "none",
+  },
+
+  headerLeft: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+  },
+
+  accentBar: {
+    width: 4,
+    height: 26,
+    borderRadius: 20,
+    background:
+      "linear-gradient(to bottom, #00ffe1, #0077ff)",
+    boxShadow: "0 0 15px #00ffe1",
+  },
+
+  title: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: 900,
+    margin: 0,
+    letterSpacing: 0.3,
+  },
+
+  subtitle: {
+    color: "#666",
+    fontSize: 11,
+    marginTop: 2,
+  },
+
+  /* TABS */
+
+  tabsWrapper: {
     display: "flex",
     overflowX: "auto",
-    gap: "8px",
-    padding: "0 15px",
-    marginBottom: "18px",
-    scrollbarWidth: "none"
+    gap: 8,
+    padding: "0 14px 14px",
+    scrollbarWidth: "none",
+    WebkitOverflowScrolling: "touch",
   },
+
   tab: {
-    padding: "6px 14px",
-    borderRadius: "8px",
-    fontSize: "11px",
-    fontWeight: "800",
+    border: "none",
+    minHeight: 34,
+    padding: "0 14px",
+    borderRadius: 999,
+    fontSize: 11,
+    fontWeight: 800,
     whiteSpace: "nowrap",
-    cursor: "pointer",
-    transition: "0.3s"
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    backdropFilter: "blur(12px)",
+    transition: "0.2s",
+    flexShrink: 0,
   },
+
+  /* EMPTY */
+
+  emptyBox: {
+    margin: "0 14px 14px",
+    padding: 18,
+    borderRadius: 18,
+    background:
+      "linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02))",
+
+    border: "1px solid rgba(255,255,255,0.05)",
+    backdropFilter: "blur(12px)",
+  },
+
+  emptyTitle: {
+    color: "#fff",
+    fontSize: 14,
+    marginBottom: 6,
+  },
+
+  emptyText: {
+    color: "#777",
+    fontSize: 11,
+    lineHeight: 1.5,
+  },
+
+  /* STORIES */
 
   scrollArea: {
     display: "flex",
     overflowX: "auto",
-    gap: "12px",
-    padding: "0 15px 10px",
+    gap: 10,
+    padding: "0 14px 6px",
     scrollbarWidth: "none",
-    WebkitOverflowScrolling: "touch"
+    WebkitOverflowScrolling: "touch",
+    scrollSnapType: "x mandatory",
   },
 
   card: {
-    flex: "0 0 100px", // TAILLE RÉDUITE ICI
-    cursor: "pointer"
+    flex: "0 0 92px",
+    scrollSnapAlign: "start",
+    cursor: "pointer",
   },
-  imgBox: {
+
+  imageBox: {
     position: "relative",
-    width: "100px",
-    height: "140px",
-    borderRadius: "8px",
+    width: 92,
+    height: 128,
+    borderRadius: 16,
     overflow: "hidden",
-    backgroundColor: "#111",
-    boxShadow: "0 4px 10px rgba(0,0,0,0.3)"
+
+    background:
+      "linear-gradient(180deg, #1a1a1a, #111)",
+
+    border: "1px solid rgba(255,255,255,0.05)",
+
+    boxShadow:
+      "0 10px 25px rgba(0,0,0,0.35)",
   },
-  img: { width: "100%", height: "100%", objectFit: "cover" },
+
+  image: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+  },
+
   overlay: {
     position: "absolute",
     inset: 0,
-    background: "linear-gradient(to top, rgba(0,0,0,0.7) 10%, transparent 50%)",
-    display: "flex",
-    alignItems: "flex-end",
-    padding: "6px"
+    background:
+      "linear-gradient(to top, rgba(0,0,0,0.9), transparent 60%)",
   },
-  catBadge: {
-    fontSize: "7px",
-    fontWeight: "900",
-    color: "#00f7ff",
-    textTransform: "uppercase"
+
+  badge: {
+    position: "absolute",
+    bottom: 6,
+    left: 6,
+
+    padding: "3px 7px",
+
+    borderRadius: 999,
+
+    background:
+      "rgba(0,0,0,0.55)",
+
+    backdropFilter: "blur(10px)",
+
+    color: "#00ffe1",
+    fontSize: 7,
+    fontWeight: 900,
+    textTransform: "uppercase",
+
+    border:
+      "1px solid rgba(255,255,255,0.08)",
   },
-  fableTitle: {
-    fontSize: "11px",
-    fontWeight: "700",
-    color: "#eee",
-    marginTop: "8px",
+
+  newBadge: {
+    position: "absolute",
+    top: 6,
+    right: 6,
+
+    padding: "2px 6px",
+
+    borderRadius: 999,
+
+    background:
+      "linear-gradient(135deg, #00ffe1, #0077ff)",
+
+    color: "#000",
+    fontSize: 7,
+    fontWeight: 900,
+  },
+
+  textBox: {
+    paddingTop: 7,
+  },
+
+  storyTitle: {
+    color: "#f1f1f1",
+    fontSize: 10.5,
+    fontWeight: 700,
+    lineHeight: 1.3,
+
     display: "-webkit-box",
-    WebkitLineClamp: 1,
+    WebkitLineClamp: 2,
     WebkitBoxOrient: "vertical",
-    overflow: "hidden"
+
+    overflow: "hidden",
   },
-  fableAuthor: {
-    fontSize: "9px",
-    color: "#555",
-    marginTop: "2px"
-  }
+
+  author: {
+    color: "#666",
+    fontSize: 8.5,
+    marginTop: 3,
+  },
 };

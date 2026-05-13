@@ -1,92 +1,234 @@
 import React, { useState, useMemo } from "react";
+import {
+  Home,
+  Newspaper,
+  BookOpen,
+  User,
+  Plus,
+  MessageCircle,
+  Users,
+  PenSquare,
+} from "lucide-react";
+
+import { motion, AnimatePresence } from "framer-motion";
 import { useUserContext } from "../screens/users/userContext";
 
-const NEON_COLORS = ["#ff003c", "#00f7ff", "#ff00ff", "#39ff14", "#ffd300", "#8f00ff"];
+const NEON_COLORS = [
+  "#00e5ff",
+  "#7a5cff",
+  "#ff4fd8",
+  "#39ff88",
+];
 
 export default function Navbar({ setView }) {
   const [showMenu, setShowMenu] = useState(false);
   const [activeTab, setActiveTab] = useState("home");
+
   const { user } = useUserContext();
 
-  // Couleur néon unique pour la session
   const neonColor = useMemo(() => {
-    return NEON_COLORS[Math.floor(Math.random() * NEON_COLORS.length)];
+    return NEON_COLORS[
+      Math.floor(Math.random() * NEON_COLORS.length)
+    ];
   }, []);
 
   const go = (view) => {
     setActiveTab(view);
     setShowMenu(false);
 
-    // Sécurité Profil
+    // sécurité profil
     if (view === "profile" && !user) {
       setView("login");
       return;
     }
 
-    // Sécurité Auteur
+    // sécurité auteur
     if (view === "author_apply") {
-      if (!user) { setView("login"); return; }
-      if (user.role !== "author") { setView("access_code"); return; }
+      if (!user) {
+        setView("login");
+        return;
+      }
+
+      if (user.role !== "author") {
+        setView("access_code");
+        return;
+      }
     }
 
     setView(view);
   };
 
-  // Style dynamique pour l'état actif vs inactif
-  const getTabStyle = (view) => {
-    const isActive = activeTab === view;
-    return {
-      color: isActive ? neonColor : "#555",
-      textShadow: isActive ? `0 0 8px ${neonColor}` : "none",
-      transition: "color 0.3s ease",
-    };
-  };
+  const tabs = [
+    {
+      id: "home",
+      label: "Accueil",
+      icon: Home,
+    },
+    {
+      id: "news",
+      label: "News",
+      icon: Newspaper,
+    },
+    {
+      id: "myseries",
+      label: "Séries",
+      icon: BookOpen,
+    },
+    {
+      id: "profile",
+      label: "Profil",
+      icon: User,
+    },
+  ];
 
   return (
     <div style={s.wrapper}>
-      {/* Menu Flottant Compact */}
-      {showMenu && (
-        <div style={s.floatingMenu}>
-          <div style={s.menuItem} onClick={() => go("messaging")}>💬 Messages</div>
-          <div style={s.menuItem} onClick={() => go("contacts")}>👥 Contacts</div>
-          <div style={{ ...s.menuItem, border: "none" }} onClick={() => go("author_apply")}>
-            ✍️ Add Story
-          </div>
-          <div style={s.menuArrow}></div>
+      {/* FLOAT MENU */}
+      <AnimatePresence>
+        {showMenu && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.92 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.92 }}
+            transition={{ duration: 0.18 }}
+            style={s.menuContainer}
+          >
+            <button
+              style={s.menuBtn}
+              onClick={() => go("messaging")}
+            >
+              <MessageCircle size={15} />
+              <span>Messages</span>
+            </button>
+
+            <button
+              style={s.menuBtn}
+              onClick={() => go("contacts")}
+            >
+              <Users size={15} />
+              <span>Contacts</span>
+            </button>
+
+            <button
+              style={{
+                ...s.menuBtn,
+                color: neonColor,
+              }}
+              onClick={() => go("author_apply")}
+            >
+              <PenSquare size={15} />
+              <span>Publier</span>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* NAVBAR */}
+      <nav style={s.navbar}>
+        {/* LEFT */}
+        <div style={s.side}>
+          {tabs.slice(0, 2).map((tab) => {
+            const Icon = tab.icon;
+            const active = activeTab === tab.id;
+
+            return (
+              <button
+                key={tab.id}
+                style={s.navBtn}
+                onClick={() => go(tab.id)}
+              >
+                <Icon
+                  size={18}
+                  color={active ? neonColor : "#666"}
+                  strokeWidth={2.3}
+                />
+
+                <span
+                  style={{
+                    ...s.label,
+                    color: active ? "#fff" : "#666",
+                  }}
+                >
+                  {tab.label}
+                </span>
+
+                {active && (
+                  <div
+                    style={{
+                      ...s.activeDot,
+                      background: neonColor,
+                    }}
+                  />
+                )}
+              </button>
+            );
+          })}
         </div>
-      )}
 
-      <nav style={s.navBar}>
-        <div style={s.sideGroup}>
-          <button onClick={() => go("home")} style={s.iconBtn}>
-            <span style={{ ...s.icon, ...getTabStyle("home") }}>🏠</span>
-            <span style={{ ...s.text, ...getTabStyle("home") }}>Accueil</span>
-          </button>
+        {/* CENTER */}
+        <div style={s.centerWrapper}>
+          <motion.button
+            whileTap={{ scale: 0.94 }}
+            onClick={() => setShowMenu(!showMenu)}
+            style={{
+              ...s.centerBtn,
+              border: `1px solid ${neonColor}55`,
+              boxShadow: `0 0 20px ${neonColor}22`,
+            }}
+          >
+            <div
+              style={{
+                ...s.centerGlow,
+                background: neonColor,
+              }}
+            />
 
-          <button onClick={() => go("news")} style={s.iconBtn}>
-            <span style={{ ...s.icon, ...getTabStyle("news") }}>🎡</span>
-            <span style={{ ...s.text, ...getTabStyle("news") }}>News</span>
-          </button>
+            <Plus
+              size={20}
+              color={neonColor}
+              strokeWidth={2.8}
+            />
+          </motion.button>
         </div>
 
-        {/* Bouton Central fixe sans zoom */}
-        <div style={s.centerBtnWrapper} onClick={() => setShowMenu(!showMenu)}>
-          <div style={{ ...s.glow, backgroundColor: neonColor }} />
-          <div style={{ ...s.boltCircle, borderColor: neonColor, color: neonColor }}>
-            ⚡
-          </div>
-        </div>
+        {/* RIGHT */}
+        <div style={s.side}>
+          {tabs.slice(2).map((tab) => {
+            const Icon = tab.icon;
+            const active = activeTab === tab.id;
 
-        <div style={s.sideGroup}>
-          <button onClick={() => go("myseries")} style={s.iconBtn}>
-            <span style={{ ...s.icon, ...getTabStyle("myseries") }}>📚</span>
-            <span style={{ ...s.text, ...getTabStyle("myseries") }}>Séries</span>
-          </button>
+            return (
+              <button
+                key={tab.id}
+                style={s.navBtn}
+                onClick={() => go(tab.id)}
+              >
+                <Icon
+                  size={18}
+                  color={active ? neonColor : "#666"}
+                  strokeWidth={2.3}
+                />
 
-          <button onClick={() => go("profile")} style={s.iconBtn}>
-            <span style={{ ...s.icon, ...getTabStyle("profile") }}>👤</span>
-            <span style={{ ...s.text, ...getTabStyle("profile") }}>Profil</span>
-          </button>
+                <span
+                  style={{
+                    ...s.label,
+                    color: active ? "#fff" : "#666",
+                  }}
+                >
+                  {tab.label}
+                </span>
+
+                {active && (
+                  <div
+                    style={{
+                      ...s.activeDot,
+                      background: neonColor,
+                    }}
+                  />
+                )}
+              </button>
+            );
+          })}
         </div>
       </nav>
     </div>
@@ -96,107 +238,119 @@ export default function Navbar({ setView }) {
 const s = {
   wrapper: {
     position: "fixed",
-    bottom: 0,
     left: 0,
-    width: "100%",
-    zIndex: 9999,
+    right: 0,
+    bottom: 0,
+    zIndex: 999,
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
     pointerEvents: "none",
   },
-  navBar: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    backgroundColor: "#050508", // Plus sombre pour faire ressortir le néon
-    borderTop: "1px solid rgba(255,255,255,0.05)",
+
+  navbar: {
     width: "100%",
-    height: "60px", // Réduit pour faire plus "App"
-    padding: "0 10px",
-    pointerEvents: "auto",
-    boxShadow: "0 -2px 15px rgba(0,0,0,0.5)",
-  },
-  sideGroup: {
+    height: "62px",
+    background: "rgba(5,7,12,0.96)",
+    backdropFilter: "blur(18px)",
+    borderTop: "1px solid rgba(255,255,255,0.05)",
     display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "0 6px",
+    position: "relative",
+    boxShadow: "0 -8px 30px rgba(0,0,0,0.45)",
+    pointerEvents: "auto",
+  },
+
+  side: {
     flex: 1,
+    display: "flex",
     justifyContent: "space-around",
     alignItems: "center",
   },
-  iconBtn: {
-    background: "none",
+
+  navBtn: {
+    position: "relative",
     border: "none",
-    padding: "5px",
+    background: "transparent",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
+    justifyContent: "center",
+    gap: "3px",
+    minWidth: "54px",
+    height: "100%",
     cursor: "pointer",
-    width: "60px",
   },
-  icon: {
-    fontSize: "18px",
-    marginBottom: "2px",
-  },
-  text: {
+
+  label: {
     fontSize: "9px",
-    fontWeight: "500",
-    textTransform: "uppercase",
+    fontWeight: "700",
     letterSpacing: "0.3px",
+    transition: "0.2s",
   },
-  centerBtnWrapper: {
+
+  activeDot: {
+    position: "absolute",
+    bottom: "6px",
+    width: "4px",
+    height: "4px",
+    borderRadius: "50%",
+    boxShadow: "0 0 8px currentColor",
+  },
+
+  centerWrapper: {
     position: "relative",
-    top: "-15px", // Moins haut qu'avant pour la discrétion
+    top: "-16px",
     pointerEvents: "auto",
   },
-  boltCircle: {
-    width: "50px", // Réduit de 60px à 50px
-    height: "50px",
-    backgroundColor: "#050508",
-    border: "2px solid",
-    borderRadius: "50%",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    fontSize: "20px",
-    zIndex: 2,
-    position: "relative",
-  },
-  glow: {
-    position: "absolute",
+
+  centerBtn: {
     width: "50px",
     height: "50px",
     borderRadius: "50%",
-    filter: "blur(12px)",
-    opacity: 0.5,
-    top: 0,
-    left: 0,
-  },
-  floatingMenu: {
-    backgroundColor: "#0a0a0f",
-    border: "1px solid rgba(255,255,255,0.1)",
-    borderRadius: "15px",
-    width: "150px",
-    marginBottom: "10px",
-    pointerEvents: "auto",
+    background: "#090b11",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
     position: "relative",
     overflow: "hidden",
-    boxShadow: "0 10px 25px rgba(0,0,0,0.6)",
-  },
-  menuItem: {
-    color: "#eee",
-    padding: "12px",
-    fontSize: "12px",
-    textAlign: "center",
-    borderBottom: "1px solid rgba(255,255,255,0.03)",
     cursor: "pointer",
   },
-  menuArrow: {
+
+  centerGlow: {
     position: "absolute",
-    bottom: "-5px",
-    left: "50%",
-    transform: "translateX(-50%) rotate(45deg)",
-    width: "10px",
-    height: "10px",
-    backgroundColor: "#0a0a0f",
+    inset: 0,
+    opacity: 0.15,
+    filter: "blur(18px)",
+  },
+
+  menuContainer: {
+    marginBottom: "10px",
+    width: "170px",
+    borderRadius: "18px",
+    background: "rgba(10,12,18,0.98)",
+    border: "1px solid rgba(255,255,255,0.06)",
+    backdropFilter: "blur(20px)",
+    overflow: "hidden",
+    boxShadow: "0 20px 40px rgba(0,0,0,0.55)",
+    pointerEvents: "auto",
+  },
+
+  menuBtn: {
+    width: "100%",
+    border: "none",
+    background: "transparent",
+    color: "#e5e7eb",
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    padding: "13px 14px",
+    fontSize: "12px",
+    fontWeight: "700",
+    borderBottom: "1px solid rgba(255,255,255,0.04)",
+    cursor: "pointer",
+    transition: "0.2s",
   },
 };
