@@ -1,3 +1,5 @@
+// Top-level build file
+
 buildscript {
 
     repositories {
@@ -6,7 +8,10 @@ buildscript {
     }
 
     dependencies {
+
+        // VERSION STABLE COMPATIBLE JAVA 17
         classpath 'com.android.tools.build:gradle:8.7.3'
+
         classpath 'com.google.gms:google-services:4.4.2'
     }
 }
@@ -14,6 +19,7 @@ buildscript {
 apply from: "variables.gradle"
 
 allprojects {
+
     repositories {
         google()
         mavenCentral()
@@ -29,6 +35,7 @@ subprojects {
             project.android {
 
                 compileOptions {
+
                     sourceCompatibility JavaVersion.VERSION_17
                     targetCompatibility JavaVersion.VERSION_17
                 }
@@ -36,12 +43,13 @@ subprojects {
         }
 
         tasks.withType(JavaCompile).configureEach {
+
             sourceCompatibility = "17"
             targetCompatibility = "17"
         }
     }
 }
 
-task clean(type: Delete) {
+tasks.register("clean", Delete) {
     delete rootProject.buildDir
 }
