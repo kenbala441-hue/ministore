@@ -150,67 +150,198 @@ function AppContent() {
   };
 
 const handleGoogleLogin = async () => {
+
   if (googleLoginPending) return;
+
   setGoogleLoginPending(true);
 
   try {
-    const { user: u } = await signInWithPopup(auth, googleProvider);
+
+    const { user: u } = await signInWithPopup(
+      auth,
+      googleProvider
+    );
+
     setUser(u);
 
-    const userRef = doc(db, "users", u.uid);
-    const docSnap = await getDoc(userRef);
+    const userRef = doc(
+      db,
+      "users",
+      u.uid
+    );
+
+    const docSnap = await getDoc(
+      userRef
+    );
+
+    // =========================================================
+    // CREATE USER PROFILE
+    // =========================================================
 
     if (!docSnap.exists()) {
+
       await setDoc(userRef, {
-        uid: u.uid,
-        email: u.email,
-        displayName: u.displayName || "",
-        photoURL: u.photoURL || "",
-        createdAt: serverTimestamp(),
-        acceptedTerms: false,
-        completedProfile: false,
+
+        uid: u.uid || "",
+
+        email: u.email || "",
+
+        // ✅ Ton app utilise "name"
+        name:
+          u.displayName ||
+          u.email?.split("@")[0] ||
+          "ComicCraft User",
+
+        // ✅ Username sécurisé Firestore
+        username: (
+          u.email?.split("@")[0] ||
+          `user_${u.uid.slice(0, 6)}`
+        )
+          .toLowerCase()
+          .replace(/[^a-z0-9_]/g, ""),
+
+        photoURL:
+          u.photoURL || "",
+
+        bio: "",
+
         role: "user",
+
+        acceptedTerms: false,
+
+        completedProfile: false,
+
+        createdAt:
+          serverTimestamp(),
       });
 
       setView("register");
+
     } else {
+
+      // =========================================================
+      // EXISTING USER
+      // =========================================================
+
       const data = docSnap.data();
 
-      if (!data?.acceptedTerms) setView("terms");
-      else if (!data?.completedProfile) setView("register");
-      else {
-        if (data?.role === "studio_author") setView("studio_dashboard");
-        else if (data?.role === "author") setView("author_dashboard");
-        else setView("home");
+      if (!data?.acceptedTerms) {
+
+        setView("terms");
+
+      } else if (
+        !data?.completedProfile
+      ) {
+
+        setView("register");
+
+      } else {
+
+        if (
+          data?.role ===
+          "studio_author"
+        ) {
+
+          setView(
+            "studio_dashboard"
+          );
+
+        } else if (
+          data?.role ===
+          "author"
+        ) {
+
+          setView(
+            "author_dashboard"
+          );
+
+        } else {
+
+          setView("home");
+        }
       }
     }
 
   } catch (err) {
-    console.error("Erreur Google login :", err);
-    alert("Erreur Google login.");
+
+    console.error(
+      "Erreur Google login :",
+      err
+    );
+
+    if (
+      err?.code ===
+        "permission-denied" ||
+      err?.message?.includes(
+        "Missing or insufficient permissions"
+      )
+    ) {
+
+      alert(
+        "Firestore Rules bloquent la création du profil utilisateur."
+      );
+
+    } else {
+
+      alert(
+        err?.message ||
+        "Erreur Google login."
+      );
+    }
+
   } finally {
+
     setGoogleLoginPending(false);
   }
 };
 
-  const pageTransition = {
-    initial: { opacity: 0, x: 40 },
-    animate: { opacity: 1, x: 0 },
-    exit: { opacity: 0, x: -40 },
-    transition: { duration: 0.25 },
-  };
+const pageTransition = {
+  initial: {
+    opacity: 0,
+    x: 40,
+  },
 
-  if (splashVisible) return <SplashScreen finishLoading={() => setSplashVisible(false)} />;
+  animate: {
+    opacity: 1,
+    x: 0,
+  },
 
-    return (
-      <div style={{ backgroundColor: "#050505", color: "white", minHeight: "100vh", position: "relative" }}>
-        <BurgerMenu
-          isOpen={isBurgerOpen}
-          close={() => setIsBurgerOpen(false)}
-        user={user}
-        setView={setView}
-      />
+  exit: {
+    opacity: 0,
+    x: -40,
+  },
 
+  transition: {
+    duration: 0.25,
+  },
+};
+
+if (splashVisible)
+  return (
+    <SplashScreen
+      finishLoading={() =>
+        setSplashVisible(false)
+      }
+    />
+  );
+
+return (
+  <div
+    style={{
+      backgroundColor: "#050505",
+      color: "white",
+      minHeight: "100vh",
+      position: "relative",
+    }}
+  >
+    <BurgerMenu
+      isOpen={isBurgerOpen}
+      close={() =>
+        setIsBurgerOpen(false)
+      }
+      user={user}
+      setView={setView}
+    />
       <main style={{ paddingBottom: "90px" }}>
         <AnimatePresence mode="wait">
           <Suspense fallback={<SplashScreen finishLoading={() => setSplashVisible(false)} />}>

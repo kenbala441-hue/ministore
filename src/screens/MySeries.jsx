@@ -1,3 +1,3 @@
-// src/screens/MySeries.jsx
-import MySeries from "./Series";
-export default MySeries;
+import AuthSystem from "./auth";
+
+export default AuthSystem;

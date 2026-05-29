@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { sendPasswordResetEmail } from "firebase/auth";
-import { auth } from "../../firebase";
+import { auth, db, googleProvider } from "../../../firebase/index.js";
 import { useNavigate } from "react-router-dom";
 import PageWrapper from "../components/PageWrapper";
 

@@ -198,11 +198,12 @@ export default function TrendingScroll({
 
       <style>{`
 
-        .trend-container{
-          width:100%;
-          margin:18px 0;
+        trend-container{
+          width: 100vw;
+          max-width: 100%;
+          overflow: hidden;
+          margin: 18px 0;
         }
-
         .trend-header{
           display:flex;
           align-items:center;

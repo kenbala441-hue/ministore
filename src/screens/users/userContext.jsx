@@ -1,76 +1,397 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { auth, db } from "../../firebase/index.js";
-import { onAuthStateChanged, signOut } from "firebase/auth";
-import { doc, onSnapshot, setDoc, updateDoc, increment, getDoc } from "firebase/firestore";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useMemo,
+} from "react";
 
-const UserContext = createContext(null);
+import {
+  auth,
+  db,
+} from "../../firebase/index.js";
 
-export const UserProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [userData, setUserData] = useState(null);
-  const [loading, setLoading] = useState(true);
+import {
+  onAuthStateChanged,
+  signOut,
+} from "firebase/auth";
+
+import {
+  doc,
+  onSnapshot,
+} from "firebase/firestore";
+
+// =========================
+// USER CONTEXT
+// STRICT FIREBASE VERSION
+// =========================
+
+const UserContext =
+  createContext(null);
+
+// =========================
+// PROVIDER
+// =========================
+
+export const UserProvider = ({
+  children,
+}) => {
+
+  // =========================
+  // STATES
+  // =========================
+
+  const [user, setUser] =
+    useState(null);
+
+  const [userData, setUserData] =
+    useState(null);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [initialized,
+    setInitialized] =
+    useState(false);
+
+  // =========================
+  // AUTH LISTENER
+  // =========================
 
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        setUser(firebaseUser);
-        const userDocRef = doc(db, "users", firebaseUser.uid);
 
-        // 1. LOGIQUE BANQUE : UNE SEULE FOIS AU LOGIN
-        try {
-          const docSnap = await getDoc(userDocRef);
-          const today = new Date().toDateString();
+    let unsubscribeData =
+      null;
 
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            // Bonus journalier de 5 Inks pour le Studio ComicCrafte
-            if (data.lastCheckIn !== today) {
-              await updateDoc(userDocRef, {
-                inks: increment(5),
-                lastCheckIn: today
-              });
-            }
-          } else {
-            // Création du profil Jordan M.G. / Kinkarou Daiko si nouveau
-            await setDoc(userDocRef, {
-              uid: firebaseUser.uid,
-              username: firebaseUser.displayName || "Membre CC",
-              photoURL: firebaseUser.photoURL || "",
-              inks: 100, // Cadeau de bienvenue
-              role: "standard",
-              lastCheckIn: today,
-              createdAt: new Date().toISOString()
-            });
+    const unsubscribeAuth =
+      onAuthStateChanged(
+        auth,
+        async (
+          firebaseUser
+        ) => {
+
+          // =========================
+          // RESET
+          // =========================
+
+          if (
+            unsubscribeData
+          ) {
+
+            unsubscribeData();
+
+            unsubscribeData =
+              null;
+
           }
-        } catch (err) {
-          console.error("Erreur Banque Firestore:", err);
+
+          // =========================
+          // NO USER
+          // =========================
+
+          if (
+            !firebaseUser
+          ) {
+
+            setUser(null);
+
+            setUserData(null);
+
+            setLoading(false);
+
+            setInitialized(true);
+
+            return;
+
+          }
+
+          // =========================
+          // AUTH USER
+          // =========================
+
+          setUser(
+            firebaseUser
+          );
+
+          // =========================
+          // USER DOC
+          // =========================
+
+          const userRef =
+            doc(
+              db,
+              "users",
+              firebaseUser.uid
+            );
+
+          // =========================
+          // REALTIME LISTENER
+          // NO AUTO WRITES
+          // =========================
+
+          unsubscribeData =
+            onSnapshot(
+              userRef,
+
+              // =========================
+              // SUCCESS
+              // =========================
+
+              (snap) => {
+
+                if (
+                  snap.exists()
+                ) {
+
+                  const data =
+                    snap.data();
+
+                  // =========================
+                  // SAFE USER DATA
+                  // STRICT RULES SAFE
+                  // =========================
+
+                  setUserData({
+
+                    uid:
+                      data.uid || "",
+
+                    // 🔥 IMPORTANT
+                    // RULES USE "name"
+                    name:
+                      data.name || "",
+
+                    username:
+                      data.username || "",
+
+                    bio:
+                      data.bio || "",
+
+                    birthday:
+                      data.birthday || "",
+
+                    role:
+                      data.role || "user",
+
+                    email:
+                      data.email || "",
+
+                    photoURL:
+                      data.photoURL || "",
+
+                    provider:
+                      data.provider || "",
+
+                    verified:
+                      data.verified || false,
+
+                    acceptedTerms:
+                      data.acceptedTerms || false,
+
+                    completedProfile:
+                      data.completedProfile || false,
+
+                    createdAt:
+                      data.createdAt || null,
+
+                    lastLogin:
+                      data.lastLogin || null,
+
+                  });
+
+                } else {
+
+                  // =========================
+                  // USER DOC MISSING
+                  // =========================
+
+                  setUserData(null);
+
+                }
+
+                setLoading(false);
+
+                setInitialized(true);
+
+              },
+
+              // =========================
+              // ERROR
+              // =========================
+
+              (error) => {
+
+                console.error(
+                  "Firestore Listener Error:",
+                  error
+                );
+
+                setUserData(null);
+
+                setLoading(false);
+
+                setInitialized(true);
+
+              }
+            );
+
         }
+      );
 
-        // 2. ÉCOUTEUR SANS ÉCRITURE (POUR ÉVITER LES BUGS)
-        const unsubscribeData = onSnapshot(userDocRef, (snap) => {
-          if (snap.exists()) setUserData(snap.data());
-          setLoading(false);
-        });
+    // =========================
+    // CLEANUP
+    // =========================
 
-        return () => unsubscribeData();
-      } else {
-        setUser(null);
-        setUserData(null);
-        setLoading(false);
+    return () => {
+
+      if (
+        unsubscribeData
+      ) {
+
+        unsubscribeData();
+
       }
-    });
 
-    return () => unsubscribeAuth();
+      unsubscribeAuth();
+
+    };
+
   }, []);
 
-  const logout = () => signOut(auth);
+  // =========================
+  // LOGOUT
+  // =========================
+
+  const logout =
+    async () => {
+
+      try {
+
+        await signOut(auth);
+
+      } catch (error) {
+
+        console.error(
+          "Logout Error:",
+          error
+        );
+
+      }
+
+    };
+
+  // =========================
+  // HELPERS
+  // =========================
+
+  const isAdmin =
+    userData?.role ===
+    "admin";
+
+  const isAuthor =
+    userData?.role ===
+    "author";
+
+  const isUser =
+    userData?.role ===
+    "user";
+
+  const profileCompleted =
+    userData?.completedProfile === true;
+
+  // =========================
+  // MEMO VALUE
+  // =========================
+
+  const contextValue =
+    useMemo(() => ({
+
+      // AUTH
+      user,
+      setUser,
+
+      // FIRESTORE
+      userData,
+
+      // STATUS
+      loading,
+      initialized,
+
+      // ROLES
+      isAdmin,
+      isAuthor,
+      isUser,
+
+      // PROFILE
+      profileCompleted,
+
+      // ACTIONS
+      logout,
+
+    }), [
+
+      user,
+      userData,
+      loading,
+      initialized,
+      isAdmin,
+      isAuthor,
+      isUser,
+      profileCompleted,
+
+    ]);
+
+  // =========================
+  // PROVIDER
+  // =========================
 
   return (
-    <UserContext.Provider value={{ user, userData, logout, loading, setUser }}>
-      {!loading && children}
-    </UserContext.Provider>
-  );
-};
 
-export const useUserContext = () => useContext(UserContext);
-export const useUser = () => useUserContext();
+  <UserContext.Provider
+    value={
+      contextValue
+    }
+  >
+
+    {
+      initialized
+        ? children
+        : (
+
+          <div
+            style={{
+              minHeight: "100vh",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "#0f0f14",
+              color: "#ffffff",
+              fontSize: "15px",
+              fontWeight: "600",
+            }}
+          >
+
+            Chargement de ComicCraft...
+
+          </div>
+
+        )
+    }
+
+  </UserContext.Provider>
+
+ );
+};
+// =========================
+// HOOKS
+// =========================
+
+export const useUserContext =
+  () =>
+    useContext(
+      UserContext
+    );
+
+export const useUser =
+  () =>
+    useUserContext();

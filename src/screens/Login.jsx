@@ -1,3 +1,4 @@
-import LoginPage from "./auth/pages/LoginPage";
+import AuthSystem from "./auth";
 
-export default LoginPage;
+// On exporte le système centralisé complet
+export default AuthSystem;

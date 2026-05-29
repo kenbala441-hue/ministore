@@ -1,69 +1,31 @@
-.safeArea {
+/* =========================================
+   CONTENEUR RACINE (Fixe et Stable)
+========================================= */
+.comic-wrapper {
   min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 20px;
-
-  background: linear-gradient(
-    135deg,
-    #0ff,
-    #f0f,
-    #ff0,
-    #0f0,
-    #f00,
-    #00f,
-    #ff8800,
-    #88ff00,
-    #ff0088,
-    #0088ff,
-    #ff44ff
-  );
-
-  background-size: 600% 600%;
-  animation: neonGradient 20s ease infinite;
-
-  transition: background 1s ease-in-out;
-}
-
-.container {
-  max-width: 450px;
   width: 100%;
-
-  background: rgba(17, 24, 39, 0.85);
-  backdrop-filter: blur(10px);
-
-  border-radius: 16px;
-  padding: 30px;
-
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-
-  border: 1px solid rgba(255,255,255,0.2);
-
-  box-shadow:
-    0 0 10px #0ff,
-    0 0 20px #f0f,
-    0 0 30px #ff0,
-    0 0 40px #0f0;
+  position: relative;
+  background: #050505; /* Fond noir pur pour économiser la batterie */
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
-/* animation du gradient */
-@keyframes neonGradient {
-  0% {
-    background-position: 0% 50%;
-  }
-  25% {
-    background-position: 50% 100%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  75% {
-    background-position: 50% 0%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
+/* =========================================
+   LUEUR NÉON DISCRÈTE EN ARRIÈRE-PLAN
+========================================= */
+.cosmic-glow {
+  position: fixed;
+  inset: 0;
+  /* Crée un dégradé violet/bleu très sombre et immersif */
+  background: radial-gradient(circle at 50% -20%, rgba(138, 43, 226, 0.15), transparent 70%),
+              radial-gradient(circle at 0% 100%, rgba(0, 245, 212, 0.05), transparent 50%);
+  pointer-events: none;
+  z-index: 0;
 }
+
+/* =========================================
+   ZONE DE CONTENU (Fini le centrage forcé !)
+========================================= */
+.content-fluid {
+  position: relative;
+  z-index:

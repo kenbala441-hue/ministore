@@ -1,49 +1,91 @@
 import React, { useState } from 'react';
-import { auth, loginWithGoogle } from '../firebase';
+import { auth, loginWithGoogle } from '../firebase'; // Assure-toi que loginWithGoogle fonctionne toujours
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import AuthForm from './AuthForm'; // On importe ton composant design et sécurisé !
 
 export default function Login() {
   const [isSignup, setIsSignup] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [authError, setAuthError] = useState('');
 
-  const handleAuth = async (e) => {
-    e.preventDefault();
+  // ==========================================
+  // LOGIQUE CONNEXION / INSCRIPTION
+  // ==========================================
+  const handleLoginOrRegister = async (email, password) => {
+    setLoading(true);
+    setAuthError('');
+
     try {
       if (isSignup) {
-        await createUserWithEmailAndPassword(auth, email, password);
+        // 1. Création du compte dans Firebase Auth
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        // [IMPORTANT] C'est ici ou dans ton userContext qu'il faut appeler la finalisation.
+        // Exemple si tu as une fonction globale ou locale pour Firestore :
+        // await handleFinalizeProfile(user.uid, email); 
+
       } else {
+        // Connexion classique
         await signInWithEmailAndPassword(auth, email, password);
       }
+      
+      return { success: true };
     } catch (error) {
-      alert("Erreur : " + error.message);
+      console.error("Auth Error:", error);
+      
+      // Traduction des erreurs Firebase pour ton AuthForm
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        setAuthError('identifiants incorrects.');
+      } else if (error.code === 'auth/email-already-in-use') {
+        setAuthError('cette adresse email est déjà utilisée.');
+      } else if (error.code === 'auth/weak-password') {
+        setAuthError('le mot de passe doit contenir au moins 6 caractères.');
+      } else {
+        setAuthError('une erreur est survenue, veuillez réessayer.');
+      }
+
+      return { success: false };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ==========================================
+  // ACTION GOOGLE
+  // ==========================================
+  const handleGoogleClick = async () => {
+    setLoading(true);
+    setAuthError('');
+    try {
+      await loginWithGoogle();
+    } catch (error) {
+      setAuthError('connexion google échouée.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div style={s.container}>
-      <h2 style={s.title}>{isSignup ? 'Créer un compte ComicCraft' : 'Connexion'}</h2>
-      <form onSubmit={handleAuth} style={s.form}>
-        <input type="email" placeholder="Email" onChange={(e)=>setEmail(e.target.value)} style={s.input} />
-        <input type="password" placeholder="Mot de passe" onChange={(e)=>setPassword(e.target.value)} style={s.input} />
-        <button type="submit" style={s.btnMain}>{isSignup ? 'S\'inscrire' : 'Se connecter'}</button>
-      </form>
+    <AuthForm
+      // Mode actuel (si isSignup est vrai, le bouton principal servira à s'inscrire)
+      loading={loading}
+      error={authError}
       
-      <button onClick={loginWithGoogle} style={s.btnGoogle}>Continuer avec Google</button>
+      // Callbacks vers Firebase
+      onLogin={handleLoginOrRegister}
+      onGoogle={handleGoogleClick}
       
-      <p onClick={() => setIsSignup(!isSignup)} style={s.toggle}>
-        {isSignup ? "Déjà un compte ? Connectez-vous" : "Pas de compte ? Créez-en un"}
-      </p>
-    </div>
+      // Switch entre Connexion et Inscription
+      onRegister={() => setIsSignup(!isSignup)} 
+      
+      // Placeholders pour tes futures méthodes si tu les actives
+      onApple={() => console.log('apple auth')}
+      onPhone={() => console.log('phone auth')}
+      onSmsOtp={() => console.log('sms otp')}
+      onEmailLink={() => console.log('email link')}
+      onBiometric={() => console.log('biometric')}
+      onAnonymous={() => console.log('anonymous')}
+    />
   );
 }
-
-const s = {
-  container: { padding: '20px', textAlign: 'center', backgroundColor: '#0f0f15', height: '100vh', color: 'white' },
-  title: { color: '#a855f7', marginBottom: '20px' },
-  form: { display: 'flex', flexDirection: 'column', gap: '10px' },
-  input: { padding: '12px', borderRadius: '5px', border: 'none', backgroundColor: '#1a1a2e', color: 'white' },
-  btnMain: { padding: '12px', backgroundColor: '#a855f7', color: 'white', border: 'none', borderRadius: '5px', fontWeight: 'bold' },
-  btnGoogle: { marginTop: '10px', padding: '12px', backgroundColor: 'white', color: 'black', border: 'none', borderRadius: '5px', width: '100%' },
-  toggle: { marginTop: '20px', color: '#bbb', cursor: 'pointer', fontSize: '14px' }
-};
