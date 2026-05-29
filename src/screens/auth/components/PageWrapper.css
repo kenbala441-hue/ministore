@@ -28,4 +28,5 @@
 ========================================= */
 .content-fluid {
   position: relative;
-  z-index:
+  z-index: 1; /* Donne une priorité d'affichage au-dessus de la lueur de fond */
+}
