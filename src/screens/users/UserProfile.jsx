@@ -601,29 +601,21 @@ export default function UserProfile({ setView }) {
             <Cloud
               size={18}
               color="#00f7ff"
-            />
-          }
+            />}
           label="Sauvegarde Cloud"
+         onClick={() => setView("cloud")}
         />
 
-        <MenuRow
-          icon={
-            <Star
-              size={18}
-              color="#ff00ff"
-            />
-          }
+       <MenuRow
+          icon={<Star size={18} color="#ff00ff" />}
           label="Récompenses"
-        />
+          onClick={() => setView("rewards")}
+        />  
 
         <MenuRow
-          icon={
-            <Settings
-              size={18}
-              color="#39ff14"
-            />
-          }
+          icon={<Settings size={18} color="#39ff14" />}
           label="Paramètres"
+          onClick={() => setView("settings")}
         />
 
         <button

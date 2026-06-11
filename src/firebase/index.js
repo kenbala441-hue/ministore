@@ -2,10 +2,18 @@
 
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithEmailAndPassword } from "firebase/auth";
-import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
+import { 
+  initializeFirestore, 
+  persistentLocalCache, 
+  persistentMultipleTabManager,
+  doc, 
+  getDoc, 
+  setDoc, 
+  serverTimestamp 
+} from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
-// ✅ CONFIG FIREBASE
+// ✅ CONFIGURATION UNIQUE ET DIRECTE
 const firebaseConfig = {
   apiKey: "AIzaSyAalUx5YEWq1Bs9HW_VFiqqqZpWenW69CA",
   authDomain: "comiccrafte-studio.firebaseapp.com",
@@ -22,31 +30,45 @@ export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
-// 🗄️ FIRESTORE
-export const db = getFirestore(app);
+// 🗄️ FIRESTORE (MODE OFFLINE)
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager(),
+  }),
+});
 
-// 📦 STORAGE (UPLOAD IMAGES)
+// 📦 STORAGE
 export const storage = getStorage(app);
 
-/**
- * 🔹 Connexion avec email + activation rôle author automatique
- */
+/* ============================================================
+   🔹 LOGIN + AUTO ROLE AUTHOR
+============================================================ */
 export async function loginAndActivateAuthor(email, password) {
-  const userCredential = await signInWithEmailAndPassword(auth, email, password);
-  const user = userCredential.user;
+  try {
+    const { user } = await signInWithEmailAndPassword(auth, email, password);
 
-  const userRef = doc(db, "users", user.uid);
-  const userSnap = await getDoc(userRef);
+    const userRef = doc(db, "users", user.uid);
+    const userSnap = await getDoc(userRef);
 
-  // Si email match notre email de test ou nouveau utilisateur, ajout role author
-  if (!userSnap.exists() || user.email === "kenmikael27@gmail.com") {
-    await setDoc(userRef, {
-      email: user.email,
-      username: user.email.split("@")[0],
-      role: "author",
-      createdAt: new Date()
-    });
+    const isAdminTest = email === "kenmikael27@gmail.com";
+
+    if (!userSnap.exists() || isAdminTest) {
+      await setDoc(
+        userRef,
+        {
+          email: user.email,
+          username: user.email.split("@")[0],
+          role: "author",
+          updatedAt: serverTimestamp(),
+          createdAt: userSnap.exists() ? undefined : serverTimestamp(),
+        },
+        { merge: true }
+      );
+    }
+
+    return { uid: user.uid, email: user.email, role: "author" };
+  } catch (error) {
+    console.error("Login error:", error);
+    throw error;
   }
-
-  return { uid: user.uid, email: user.email, role: "author" };
 }

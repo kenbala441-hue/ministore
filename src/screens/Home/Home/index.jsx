@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { MANGA_DATABASE } from "../../../data/MangaDesign";
 import { FABLES_DATABASE } from "../../../data/fablesDatabase";
+import { SIMPLE_FABLES } from "../../../data/Fables";
 import { PUBLIC_STORIES } from "../../../data/publicStories"; 
 import { collection, query, orderBy, onSnapshot, limit } from "firebase/firestore";
 import { db } from "../../../firebase/index.js";
@@ -11,7 +13,6 @@ import HeroSection from "../components/HeroSection";
 import TrendingGrid from "../components/TrendingGrid";
 import TopCreator from "../components/TopCreator";
 import WebtoonSection from "../components/WebtoonSection";
-
 import ComicCrafteVertical from "../components/ComicCrafteVertical";
 import TrendingScroll from "../components/TrendingScroll";
 import NewStory from "../components/NewStory";
@@ -152,6 +153,15 @@ export default function Home({ setView, setSelectedStory, setSelectedUser, toggl
       return [];
     }
   }, [stories, activeGenre]);
+  
+  // ================= BIBLIOTHÈQUE =================
+const libraryData = useMemo(() => {
+  return [
+    ...(MANGA_DATABASE || []),
+    ...(FABLES_DATABASE || []),
+    ...(filteredStories || [])
+  ];
+}, [filteredStories]);
 
   // ================= HERO =================
   const heroStory = useMemo(() => {
@@ -220,14 +230,15 @@ export default function Home({ setView, setSelectedStory, setSelectedUser, toggl
       />
 
 
-{/* REMPLACE TOUT CE BLOC DANS TON INDEX */}
+{/* 📚 COMPOSANT FABLES UNIQUE & CORRIGÉ */}
 <FablesGrid
-  fables={FABLES_DATABASE} // On utilise ta base de données fables
+  fables={SIMPLE_FABLES} // ✅ On utilise maintenant la bonne base de données pure
   setSelectedStory={handleSelectStory}
   setView={setView}
   neonColor="#FFD700"
   limit={10} 
 />
+
       {/* NEW */}
       <Section title="🆕 Récemment Ajoutés">
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -243,15 +254,18 @@ export default function Home({ setView, setSelectedStory, setSelectedUser, toggl
         </div>
       </Section>
       
-            {/* GENRES */}
-      <div style={{ marginTop: 12 }}>
-        <GenreScroll
-          genres={GENRES}
-          activeGenre={activeGenre}
-          setActiveGenre={setActiveGenre}
-          neonColor={neonColor}
-        />
-      </div>
+{/* GENRES EXPLORER */}
+<div style={{ marginTop: 12 }}>
+  <GenreScroll
+    genres={GENRES}
+    activeGenre={activeGenre}
+    setActiveGenre={setActiveGenre}
+    neonColor={neonColor}
+    setView={setView}
+    setSelectedStory={setSelectedStory}
+  />
+</div>
+
       {/* COMMUNITY */}
       <PublicStoriesSection
         setSelectedStory={handleSelectStory}
@@ -271,6 +285,17 @@ export default function Home({ setView, setSelectedStory, setSelectedUser, toggl
   neonColor="#FFD700"
   limit={10} 
 />
+
+{/* 🎌 SECTION MANGA (VERTICALE) */}
+<VerticalSection
+  title="Manga Édition"
+  data={MANGA_DATABASE || []} // On lui passe ta base de données manga
+  setView={setView}
+  setSelectedStory={handleSelectStory}
+  neonColor="#00f7ff" // Tu peux changer la couleur (ex: #00f7ff pour du bleu néon)
+/>
+
+
       {/* GRID */}
       <Section title="🎯 Pour Vous" color={neonColor}>
         {loading ? (

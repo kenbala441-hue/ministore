@@ -8,8 +8,12 @@ import {
 import { COMICCRAFTE_STORIES as storiesGeneral } from "../data/COMICCRAFTE_DATA";
 import { COMICCRAFTE_STORIES as storiesAction } from "../data/Action"; 
 import { SettingsMenu } from "./components/SettingsMenu";
-
-export default function Reader({ story, setView }) {
+import { SocialFooter } from "./components/SocialFooter";
+export default function Reader({
+  story,
+  setView,
+  user
+}){
   // ================== ÉTATS (STATE) ==================
   const [chapterIndex, setChapterIndex] = useState(0);
   const [fontSize, setFontSize] = useState(18);
@@ -19,15 +23,20 @@ export default function Reader({ story, setView }) {
   const [autoScroll, setAutoScroll] = useState(false);
   const [showChapters, setShowChapters] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
-const scrollRef = useRef(null);
+  const [scrollSpeed, setScrollSpeed] = useState(1); 
+  const scrollRef = useRef(null);
+
   // ================== THÈMES (CONFIG) ==================
+    // ================== THÈMES (CONFIG) ==================
   const themes = {
     dark: { bg: "#0a0a0c", paper: "#121214", text: "#e2e8f0", accent: "#00f7ff", border: "#1f2937", shadow: "rgba(0,0,0,0.5)" },
     light: { bg: "#f8fafc", paper: "#ffffff", text: "#0f172a", accent: "#0ea5e9", border: "#e2e8f0", shadow: "rgba(0,0,0,0.1)" },
     sepia: { bg: "#f4f1ea", paper: "#fdfbf7", text: "#433422", accent: "#92400e", border: "#e7e5e4", shadow: "rgba(67,52,34,0.1)" },
-    neon: { bg: "#050505", paper: "#000000", text: "#00fff2", accent: "#ff00ff", border: "#333", shadow: "rgba(255,0,255,0.2)" }
+    neon: { bg: "#050505", paper: "#000000", text: "#00fff2", accent: "#ff00ff", border: "#333", shadow: "rgba(255,0,255,0.2)" },
+    amoled: { bg: "#000000", paper: "#090909", text: "#ffffff", accent: "#00f7ff", border: "#111111", shadow: "rgba(0,0,0,0.9)" }
   };
-  const currentTheme = themes[theme];
+
+  const currentTheme = themes[theme] || themes["dark"];
 
 // ================== GESTION DES DONNÉES (PRO) ==================
 
@@ -341,48 +350,147 @@ const renderPageContent = (contentArray = []) => {
         </div>
       </header>
 
-      {/* --- ZONE DE LECTURE --- */}
-      <main ref={scrollRef} style={s.main}>
-        <div style={{ 
-          ...s.contentWrapper,
-          width: isWebtoonMode ? "100%" : "92%",
-          maxWidth: isWebtoonMode ? "100%" : "800px",
-          background: isWebtoonMode ? "transparent" : currentTheme.paper,
-          padding: isWebtoonMode ? "0" : "40px 25px",
-          boxShadow: isWebtoonMode ? "none" : `0 10px 40px ${currentTheme.shadow}`
-        }}>
-          {renderPageContent(pages)}
+{/* --- ZONE DE LECTURE --- */}
+<main
+  ref={scrollRef}
+  style={{
+    ...s.main,
+    background: currentTheme.bg
+  }}
+>
+  <div
+    style={{
+      ...s.contentWrapper,
+      width: isWebtoonMode ? "100%" : "92%",
+      maxWidth: isWebtoonMode ? "100%" : "820px",
+      background: isWebtoonMode
+        ? "transparent"
+        : currentTheme.paper,
+      padding: isWebtoonMode
+        ? "0"
+        : "40px 25px",
+      boxShadow: isWebtoonMode
+        ? "none"
+        : `0 10px 40px ${currentTheme.shadow}`,
+      borderRadius: isWebtoonMode ? 0 : 20,
+      overflow: "hidden"
+    }}
+  >
+    {/* CONTENU DU CHAPITRE */}
+    {renderPageContent(pages)}
 
-          {chapterIndex < chapters.length - 1 ? (
-            <button 
-              onClick={() => { setChapterIndex(prev => prev + 1); scrollRef.current.scrollTo(0, 0); }}
-              style={{ ...s.nextBtn, background: currentTheme.accent }}
-            >
-              Chapitre Suivant <ChevronRight size={20} />
-            </button>
-          ) : (
-            <div style={s.endMessage}>✨ Fin de l'aventure pour l'instant ✨</div>
-          )}
+    {/* SECTION COMMUNAUTÉ STYLE WEBTOON */}
+    <div
+      style={{
+        marginTop: 40,
+        paddingTop: 24,
+        borderTop: `1px solid ${currentTheme.border}`
+      }}
+    >
+      <SocialFooter
+        storyId={storyData.id}
+        user={user}
+      />
+    </div>
+
+    {/* NAVIGATION CHAPITRE */}
+    <div
+      style={{
+        marginTop: 30,
+        paddingTop: 24,
+        borderTop: `1px solid ${currentTheme.border}`,
+        display: "flex",
+        justifyContent: "center"
+      }}
+    >
+      {chapterIndex < chapters.length - 1 ? (
+        <button
+          onClick={() => {
+            setChapterIndex(prev => prev + 1);
+
+            scrollRef.current?.scrollTo({
+              top: 0,
+              behavior: "smooth"
+            });
+          }}
+          style={{
+            background: currentTheme.accent,
+            color: "#fff",
+            border: "none",
+            borderRadius: 999,
+            padding: "16px 28px",
+            fontWeight: 700,
+            fontSize: 15,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            cursor: "pointer",
+            boxShadow: `0 10px 30px ${currentTheme.shadow}`
+          }}
+        >
+          Chapitre Suivant
+          <ChevronRight size={20} />
+        </button>
+      ) : (
+        <div
+          style={{
+            textAlign: "center",
+            padding: "30px 20px",
+            opacity: 0.8
+          }}
+        >
+          <div
+            style={{
+              fontSize: 18,
+              fontWeight: 700,
+              marginBottom: 8
+            }}
+          >
+            🎉 Fin du chapitre
+          </div>
+
+          <div
+            style={{
+              fontSize: 14,
+              opacity: 0.7
+            }}
+          >
+            Merci d'avoir lu cette histoire.
+          </div>
         </div>
-      </main>
+      )}
+    </div>
+  </div>
+</main>
 
-{/* --- DANS TON READER.JSX --- */}
-<SettingsMenu 
-  isOpen={showSettings} 
-  onClose={() => setShowSettings(false)} 
-  settings={{ 
-    theme, 
-    fontSize, 
-    isWebtoonMode, 
-    autoScroll 
-  }} 
-  actions={{ 
-    setTheme, 
-    setFontSize, 
-    setIsWebtoonMode, 
-    setAutoScroll 
-  }} 
-/>
+      {/* --- MENU DE CONFIGURATION PRO (SYNCHRONISÉ AVEC AUDIO ET MODES) --- */}
+      <SettingsMenu 
+        isOpen={showSettings} 
+        onClose={() => setShowSettings(false)} 
+        settings={{ 
+          theme, 
+          fontSize, 
+          isWebtoonMode, // Garde la compatibilité avec ton état actuel
+          readerMode: isWebtoonMode ? "Webtoon" : "Manga", // Traduit pour l'affichage du menu
+          autoScroll,
+          audioVolume: 50, // Valeur par défaut pour l'Audio IA
+          audioSpeed: scrollSpeed, // Synchronise la vitesse avec l'auto-scroll
+          voice: "male"
+        }} 
+        actions={{ 
+          setTheme, 
+          setFontSize, 
+          setIsWebtoonMode, // Garde l'action directe si besoin
+          setReaderMode: (mode) => setIsWebtoonMode(mode === "Webtoon"), // Met à jour le mode de lecture
+          setAutoScroll,
+          // 🎧 GESTION PRO DE L'AUDIO IA : Intercepte et applique les changements
+          setAudioConfig: (config) => {
+            if (config.speed) setScrollSpeed(config.speed);
+            // Prêt à accueillir tes futurs états audio (volume, voix, articulation) ici
+          }
+        }} 
+      />
+
 
 
       {/* --- LE DRAWER DES CHAPITRES (Pour changer d'histoire facilement) --- */}

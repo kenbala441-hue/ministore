@@ -105,13 +105,33 @@ export default function MySeries({
       icon: <Unlock size={12} />,
     },
   ];
-
   // =========================
   // CURRENT LIST
   // =========================
 
   const currentList = useMemo(() => {
-    return localData?.[activeTab] || [];
+    try {
+      if (activeTab === "favorites") {
+        const cache = localStorage.getItem("comicrafte_favorites");
+        return cache ? JSON.parse(cache) : [];
+      }
+
+      if (activeTab === "downloads") {
+        const cache = localStorage.getItem("comicrafte_downloads");
+        return cache ? JSON.parse(cache) : [];
+      }
+
+      if (activeTab === "recent") {
+        const cache = localStorage.getItem("comicrafte_recents");
+        return cache ? JSON.parse(cache) : [];
+      }
+
+      // Sécurité pour les autres onglets (ex: unlocked/premium)
+      return localData?.[activeTab] || [];
+    } catch (err) {
+      console.error("Error loading tab data:", err);
+      return [];
+    }
   }, [localData, activeTab]);
 
   // =========================

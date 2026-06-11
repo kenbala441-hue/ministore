@@ -12,6 +12,7 @@ import TrendingGrid from './TrendingGrid';
 import TopCreator from './TopCreator';
 import NewStory from './NewStory';
 import NewsCard from './NewsCard';
+import StoryDisplay from "./components/StoryDisplay";
 
 const GENRES = ["Tous","Action","Horreur","Romance","Aventure","Sci-Fi","Drame","Comédie","Dark Romance"];
 const NEON_COLORS = ["#ff003c","#00f7ff","#ff00ff","#39ff14","#ffd300","#8f00ff"];

@@ -1,288 +1,376 @@
-import React, { useState, useEffect, useRef } from "react";
-import { collection, addDoc, doc, updateDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "../../../firebase/index.js";
-import { Send, Paperclip, Smile, ImageIcon, Mic, Trash2 } from "lucide-react";
-import { fetchGiphy } from "./giphyAPI"; // fonction fetch GIF externe
+// src/screens/Messaging/conversation/MessageInput.jsx
+// ⚡ MESSAGE INPUT V11 — COMICCRAFTE MESSENGER 2026
+// Style WhatsApp · Réponse · Draft · Retry · Audio · Media preview
 
-/**
- * 🔥 MESSAGE INPUT ULTRA PRO V10
- * - Texte, Images, GIF, Stickers, Audio
- * - Emojis, mentions, draft auto, undo, retry
- * - Dark mode / Light mode, auto-grow, compteur, typing indicator
- * - Feedback sending, notification, preview media, drag&drop
- * - Style néon vert/noir, inspiration WhatsApp/Messenger
- */
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import {
+  collection,
+  addDoc,
+  doc,
+  updateDoc,
+  serverTimestamp,
+} from "firebase/firestore";
+import { db } from "../../../firebase/index.js";
+import {
+  Send,
+  Paperclip,
+  Smile,
+  ImageIcon,
+  Mic,
+  X,
+  Reply,
+  AlertCircle,
+  RefreshCw,
+} from "lucide-react";
+import { fetchGiphy } from "./giphyAPI";
+import "./messaging.css"; // Ajuste le chemin si ton fichier CSS est dans un autre dossier
+
+// ─── EMOJI QUICK PANEL ───────────────────────────────────────────────────────
+
+const QUICK_EMOJIS = [
+  "😀","😂","😍","😎","🥰","😭","😤","🤔",
+  "👍","👎","❤️","🔥","🎉","💯","🙏","👀",
+];
+
+function EmojiPanel({ onPick, onClose }) {
+  return (
+    <div className="mi-emoji-panel">
+      {QUICK_EMOJIS.map((e) => (
+        <button key={e} className="mi-emoji-item" onClick={() => onPick(e)}>
+          {e}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ─── MEDIA PREVIEW ───────────────────────────────────────────────────────────
+
+function MediaPreview({ image, audio, file, onClear }) {
+  if (!image && !audio && !file) return null;
+  return (
+    <div className="mi-media-preview">
+      {image && (
+        <img src={image} alt="aperçu" className="mi-preview-img" />
+      )}
+      {audio && (
+        <audio controls src={audio} className="mi-preview-audio" />
+      )}
+      {file && (
+        <div className="mi-preview-file">
+          <Paperclip size={13} />
+          <span>{file.name}</span>
+        </div>
+      )}
+      <button className="mi-preview-clear" onClick={onClear} aria-label="Supprimer le média">
+        <X size={13} />
+      </button>
+    </div>
+  );
+}
+
+// ─── REPLY BANNER (affiché si replyTo passé depuis ChatThread) ───────────────
+
+function ReplyBanner({ message }) {
+  if (!message) return null;
+  return (
+    <div className="mi-reply-banner">
+      <div className="mi-reply-bar" />
+      <div className="mi-reply-content">
+        <span className="mi-reply-author">
+          {message.senderName || "Utilisateur"}
+        </span>
+        <span className="mi-reply-text">
+          {message.text?.slice(0, 90) || "Message"}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ─── ERROR TOAST ──────────────────────────────────────────────────────────────
+
+function ErrorToast({ message, onRetry }) {
+  return (
+    <div className="mi-error-toast">
+      <AlertCircle size={13} />
+      <span>{message}</span>
+      <button className="mi-error-retry" onClick={onRetry}>
+        <RefreshCw size={12} /> Réessayer
+      </button>
+    </div>
+  );
+}
+
+// ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
+
 export default function MessageInput({
   conversationId,
   currentUser,
-  theme = "dark", // dark / light
-  onMessageSent, // callback
+  theme = "dark",
+  onMessageSent,
+  onTyping,
+  replyTo,        // { id, text, senderName } passé depuis ChatThread
+  onReplySent,    // callback pour vider le replyTarget dans ChatThread
 }) {
-  // ─── STATE ─────────────────────────────
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const [attachedImage, setAttachedImage] = useState(null);
   const [attachedAudio, setAttachedAudio] = useState(null);
   const [attachedFile, setAttachedFile] = useState(null);
-  const [giphyResults, setGiphyResults] = useState([]);
-  const [showGiphy, setShowGiphy] = useState(false);
-  const [emojiPicker, setEmojiPicker] = useState(false);
+  const [showEmoji, setShowEmoji] = useState(false);
   const [error, setError] = useState(null);
+  const [pendingRetry, setPendingRetry] = useState(null);
   const [draftLoaded, setDraftLoaded] = useState(false);
-  const [undoStack, setUndoStack] = useState([]);
+
   const inputRef = useRef(null);
   const fileInputRef = useRef(null);
+  const imageInputRef = useRef(null);
   const audioInputRef = useRef(null);
+  const emojiRef = useRef(null);
 
-  // ─── CONSTANTS ────────────────────────
+  const draftKey = `draft-${conversationId}-${currentUser?.uid}`;
+  const hasContent =
+    text.trim().length > 0 || attachedImage || attachedAudio || attachedFile;
   const canSend =
-    Boolean(conversationId) &&
-    Boolean(currentUser?.uid) &&
-    (text.trim().length > 0 || attachedImage || attachedAudio || attachedFile) &&
-    !sending;
+    Boolean(conversationId) && Boolean(currentUser?.uid) && hasContent && !sending;
 
-  const localDraftKey = `draft-${conversationId}-${currentUser?.uid}`;
-
-  // ─── DRAFT AUTOMATIQUE ─────────────────
+  // ── Draft ─────────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!draftLoaded) {
-      const draft = localStorage.getItem(localDraftKey);
-      if (draft) setText(draft);
-      setDraftLoaded(true);
-    }
-  }, [conversationId, currentUser?.uid, draftLoaded]);
+    if (draftLoaded) return;
+    const saved = localStorage.getItem(draftKey);
+    if (saved) setText(saved);
+    setDraftLoaded(true);
+  }, [draftKey, draftLoaded]);
 
   useEffect(() => {
-    localStorage.setItem(localDraftKey, text);
+    localStorage.setItem(draftKey, text);
+  }, [text, draftKey]);
+
+  // ── Auto-grow textarea ────────────────────────────────────────────────────
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, 120) + "px";
   }, [text]);
 
-  // ─── AUTO-GROW TEXTAREA ───────────────
+  // ── Ferme emoji si clic hors ──────────────────────────────────────────────
   useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.style.height = "auto";
-      inputRef.current.style.height = inputRef.current.scrollHeight + "px";
-    }
-  }, [text]);
+    if (!showEmoji) return;
+    const handler = (e) => {
+      if (emojiRef.current && !emojiRef.current.contains(e.target)) {
+        setShowEmoji(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showEmoji]);
 
-  // ─── SEND MESSAGE ─────────────────────
-  const sendMessage = async (retry = false) => {
-    if (!canSend) return;
+  // ── Send ──────────────────────────────────────────────────────────────────
+  const buildPayload = useCallback(() => ({
+    text: text.trim(),
+    senderId: currentUser.uid,
+    senderName: currentUser.displayName || "Utilisateur",
+    timestamp: serverTimestamp(),
+    ...(replyTo && {
+      replyToId: replyTo.id,
+      replyToText: replyTo.text?.slice(0, 100),
+      replyToAuthor: replyTo.senderName,
+    }),
+    ...(attachedImage && { imageUrl: attachedImage }),
+    ...(attachedAudio && { audioUrl: attachedAudio }),
+    ...(attachedFile  && { fileUrl: attachedFile.name }),
+  }), [text, currentUser, replyTo, attachedImage, attachedAudio, attachedFile]);
 
-    const messageContent = text.trim();
-    setText(""); // Optimistic UI
+  const sendMessage = useCallback(async (payload) => {
+    const data = payload || buildPayload();
+
+    setText("");
     setAttachedImage(null);
     setAttachedAudio(null);
     setAttachedFile(null);
     setError(null);
-
-    const messageData = {
-      text: messageContent,
-      senderId: currentUser.uid,
-      senderName: currentUser.displayName || "Utilisateur",
-      timestamp: serverTimestamp(),
-      ...(attachedImage && { imageUrl: attachedImage }),
-      ...(attachedAudio && { audioUrl: attachedAudio }),
-      ...(attachedFile && { fileUrl: attachedFile.name }),
-    };
+    setPendingRetry(null);
+    onReplySent?.();
 
     try {
       setSending(true);
+      const msgsRef = collection(db, "conversations", String(conversationId), "messages");
+      await addDoc(msgsRef, data);
 
-      const messagesRef = collection(db, "conversations", String(conversationId), "messages");
-      const docRef = await addDoc(messagesRef, messageData);
-
-      const conversationRef = doc(db, "conversations", String(conversationId));
-      await updateDoc(conversationRef, {
-        lastMessage: messageContent || "[Media]",
+      await updateDoc(doc(db, "conversations", String(conversationId)), {
+        lastMessage: data.text || "[Média]",
         lastSenderId: currentUser.uid,
         updatedAt: serverTimestamp(),
         unread: true,
       });
 
-      setUndoStack((prev) => [...prev, { id: docRef.id, content: messageData }]);
-      onMessageSent && onMessageSent(messageData);
-
-      // Notification son
-      new Audio("/sounds/message-sent.mp3").play();
+      onMessageSent?.(data);
+      try { new Audio("/sounds/message-sent.mp3").play(); } catch (_) {}
     } catch (err) {
-      console.error("🔥 Envoi message échoué:", err);
-      setError("Échec envoi message. Cliquer pour retry.");
-      if (!retry) setUndoStack((prev) => [...prev, { retry: true, content: messageData }]);
+      console.error("Envoi échoué:", err);
+      setError("Message non envoyé.");
+      setPendingRetry(data);
     } finally {
       setSending(false);
     }
-  };
+  }, [buildPayload, conversationId, currentUser, onMessageSent, onReplySent]);
 
-  // ─── ATTACH IMAGE ─────────────────────
-  const handleAttachImage = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => setAttachedImage(reader.result);
-    reader.readAsDataURL(file);
-  };
+  const handleSend = useCallback(() => {
+    if (!canSend) return;
+    sendMessage();
+  }, [canSend, sendMessage]);
 
-  // ─── ATTACH AUDIO ─────────────────────
-  const handleAttachAudio = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setAttachedAudio(URL.createObjectURL(file));
-  };
+  const handleKeyDown = useCallback((e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+    onTyping?.();
+  }, [handleSend, onTyping]);
 
-  // ─── ATTACH FILE ──────────────────────
-  const handleAttachFile = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setAttachedFile(file);
-  };
+  const clearMedia = useCallback(() => {
+    setAttachedImage(null);
+    setAttachedAudio(null);
+    setAttachedFile(null);
+  }, []);
 
-  // ─── INSERT EMOJI ─────────────────────
-  const insertEmoji = (emoji) => {
-    setText((prev) => prev + emoji);
-    inputRef.current.focus();
-  };
+  const insertEmoji = useCallback((emoji) => {
+    setText((p) => p + emoji);
+    inputRef.current?.focus();
+  }, []);
 
-  // ─── GIPHY SEARCH ─────────────────────
-  const searchGiphy = async (query) => {
-    const results = await fetchGiphy(query);
-    setGiphyResults(results);
-  };
-
-  // ─── UNDO MESSAGE ─────────────────────
-  const undoLast = () => {
-    const last = undoStack.pop();
-    if (!last) return;
-    setUndoStack([...undoStack]);
-    // remove last message from Firestore logic ici
-  };
-
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div
-      className={`message-input-wrapper ${theme}`}
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "8px",
-        padding: "12px 15px",
-        backgroundColor: theme === "dark" ? "#050505" : "#fff",
-        borderTop: "1px solid rgba(0,255,128,0.2)",
-      }}
-    >
+    <div className={`mi-root mi-${theme}`}>
+
       {/* ERROR */}
       {error && (
-        <div
-          onClick={() => sendMessage(true)}
-          style={{ color: "#ff4d4f", fontSize: "0.85rem", textAlign: "center", cursor: "pointer" }}
-        >
-          {error} (Cliquer pour retry)
-        </div>
+        <ErrorToast
+          message={error}
+          onRetry={() => sendMessage(pendingRetry)}
+        />
       )}
+
+      {/* REPLY BANNER */}
+      <ReplyBanner message={replyTo} />
 
       {/* MEDIA PREVIEW */}
-      {(attachedImage || attachedAudio || attachedFile) && (
-        <div style={{ position: "relative", maxHeight: "150px", overflow: "hidden", borderRadius: "12px" }}>
-          {attachedImage && <img src={attachedImage} alt="preview" style={{ width: "100%", objectFit: "cover" }} />}
-          {attachedAudio && <audio controls src={attachedAudio} />}
-          {attachedFile && <span>{attachedFile.name}</span>}
-          <button
-            onClick={() => {
-              setAttachedImage(null);
-              setAttachedAudio(null);
-              setAttachedFile(null);
-            }}
-            style={{
-              position: "absolute",
-              top: "5px",
-              right: "5px",
-              background: "rgba(0,0,0,0.5)",
-              color: "#fff",
-              border: "none",
-              borderRadius: "50%",
-              width: "24px",
-              height: "24px",
-              cursor: "pointer",
-            }}
-          >
-            ✕
-          </button>
+      <MediaPreview
+        image={attachedImage}
+        audio={attachedAudio}
+        file={attachedFile}
+        onClear={clearMedia}
+      />
+
+      {/* EMOJI PANEL */}
+      {showEmoji && (
+        <div ref={emojiRef}>
+          <EmojiPanel
+            onPick={insertEmoji}
+            onClose={() => setShowEmoji(false)}
+          />
         </div>
       )}
 
-      {/* INPUT + BUTTONS */}
-      <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-        {/* ATTACH FILE */}
-        <button style={{ background: "none", border: "none", color: "#666", cursor: "pointer" }}>
-          <Paperclip size={20} />
-          <input type="file" style={{ display: "none" }} onChange={handleAttachFile} />
-        </button>
+      {/* INPUT ROW */}
+      <div className="mi-row">
 
-        {/* ATTACH IMAGE */}
-        <button style={{ background: "none", border: "none", color: "#666", cursor: "pointer" }}>
-          <ImageIcon size={20} />
-          <input type="file" accept="image/*" style={{ display: "none" }} onChange={handleAttachImage} />
-        </button>
+        {/* CAPSULE */}
+        <div className="mi-capsule">
 
-        {/* ATTACH AUDIO */}
-        <button style={{ background: "none", border: "none", color: "#666", cursor: "pointer" }}>
-          <Mic size={20} />
-          <input type="file" accept="audio/*" style={{ display: "none" }} onChange={handleAttachAudio} />
-        </button>
+          {/* Emoji toggle */}
+          <button
+            type="button"
+            className="mi-icon-btn mi-emoji-toggle"
+            onClick={() => setShowEmoji((v) => !v)}
+            aria-label="Emojis"
+          >
+            <Smile size={22} />
+          </button>
 
-        {/* EMOJI */}
-        <button onClick={() => setEmojiPicker(!emojiPicker)} style={{ background: "none", border: "none", color: "#666", cursor: "pointer" }}>
-          <Smile size={20} />
-        </button>
+          {/* Textarea */}
+          <textarea
+            ref={inputRef}
+            value={text}
+            onChange={(e) => { setText(e.target.value); onTyping?.(); }}
+            onKeyDown={handleKeyDown}
+            placeholder={currentUser ? "Message" : "Connectez-vous pour parler"}
+            disabled={!currentUser?.uid || sending}
+            rows={1}
+            className="mi-textarea"
+            aria-label="Zone de message"
+          />
 
-        {/* TEXTAREA */}
-        <textarea
-          ref={inputRef}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder={currentUser ? "Écrire un message..." : "Connectez-vous pour parler"}
-          disabled={!currentUser?.uid || sending}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              sendMessage();
-            }
-          }}
-          style={{
-            flex: 1,
-            padding: "12px 15px",
-            borderRadius: "20px",
-            border: "1px solid rgba(255,255,255,0.1)",
-            outline: "none",
-            backgroundColor: theme === "dark" ? "#111" : "#f5f5f5",
-            color: theme === "dark" ? "#00ff7f" : "#000",
-            fontSize: "0.95rem",
-            resize: "none",
-            transition: "border 0.3s",
-          }}
-          onFocus={(e) => (e.target.style.border = "1px solid #00ff7f")}
-          onBlur={(e) => (e.target.style.border = "1px solid rgba(255,255,255,0.1)")}
-        />
+          {/* Attach icons */}
+          <div className="mi-attach-group">
+            <label className="mi-icon-btn" aria-label="Joindre un fichier">
+              <Paperclip size={20} />
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="mi-hidden-input"
+                onChange={(e) => {
+                  const f = e.target.files[0];
+                  if (f) setAttachedFile(f);
+                }}
+              />
+            </label>
 
-        {/* SEND BUTTON */}
+            <label className="mi-icon-btn" aria-label="Joindre une image">
+              <ImageIcon size={20} />
+              <input
+                ref={imageInputRef}
+                type="file"
+                accept="image/*"
+                className="mi-hidden-input"
+                onChange={(e) => {
+                  const f = e.target.files[0];
+                  if (!f) return;
+                  const reader = new FileReader();
+                  reader.onload = () => setAttachedImage(reader.result);
+                  reader.readAsDataURL(f);
+                }}
+              />
+            </label>
+
+            {/* Micro upload (visible seulement si texte vide) */}
+            {!text.trim() && (
+              <label className="mi-icon-btn" aria-label="Joindre un audio">
+                <Mic size={20} />
+                <input
+                  ref={audioInputRef}
+                  type="file"
+                  accept="audio/*"
+                  className="mi-hidden-input"
+                  onChange={(e) => {
+                    const f = e.target.files[0];
+                    if (f) setAttachedAudio(URL.createObjectURL(f));
+                  }}
+                />
+              </label>
+            )}
+          </div>
+        </div>
+
+        {/* SEND / MIC BUTTON */}
         <button
-          onClick={sendMessage}
-          disabled={!canSend}
-          style={{
-            width: "42px",
-            height: "42px",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            backgroundColor: canSend ? "#00ff7f" : "#222",
-            color: "#000",
-            border: "none",
-            borderRadius: "50%",
-            cursor: canSend ? "pointer" : "not-allowed",
-            transition: "0.2s all",
-            boxShadow: canSend ? "0 0 15px rgba(0,255,127,0.4)" : "none",
-          }}
+          type="button"
+          className={`mi-send-btn ${canSend ? "mi-send-btn--active" : ""} ${sending ? "mi-send-btn--sending" : ""}`}
+          onClick={handleSend}
+          disabled={!canSend && !(!text.trim() && !hasContent)}
+          aria-label={hasContent ? "Envoyer" : "Message vocal"}
         >
-          {sending ? <div className="loader-mini" /> : <Send size={18} />}
+          {sending ? (
+            <span className="mi-send-spinner" />
+          ) : hasContent ? (
+            <Send size={18} className="mi-send-icon" />
+          ) : (
+            <Mic size={20} />
+          )}
         </button>
+
       </div>
     </div>
   );

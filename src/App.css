@@ -1,24 +1,11 @@
-/* App.css – version nettoyée et compatible dashboard */
-
+/* App.css - Version ultra-neutre */
 #root {
   width: 100%;
-  height: 100vh;
+  min-height: 100vh; /* Utilise min-height au lieu de height */
   margin: 0;
   padding: 0;
-  text-align: left;
+  background-color: #050505; /* Définit le fond global ici */
+  color: #fff;
 }
 
-/* styles hérités inoffensifs (conservés, mais non intrusifs) */
-
-.logo {
-  height: 6em;
-  padding: 1.5em;
-}
-
-.card {
-  padding: 1em;
-}
-
-.read-the-docs {
-  color: #888;
-}
+/* Supprime les styles .logo, .card, etc. s'ils ne sont pas utilisés */

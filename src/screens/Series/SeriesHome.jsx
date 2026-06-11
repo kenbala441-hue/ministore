@@ -17,6 +17,7 @@ import {
   Clock3,
   Bookmark,
   TrendingUp,
+  BookOpen,
   Sparkles,
   ChevronRight,
   Filter,
@@ -171,33 +172,53 @@ export default function SeriesHome({
   // UI
   // =========================
 
-  return (
-    <div style={s.container}>
+  return (    <div style={s.container}>
       {/* BG EFFECTS */}
       <div style={s.glowTop} />
       <div style={s.glowBottom} />
 
       {/* HEADER */}
       <div style={s.header}>
-        <div>
+        {/* Conteneur gauche : Badge, Titre et sous-titre */}
+        <div style={{ flex: 1 }}>
           <div style={s.badge}>
             <Sparkles size={9} />
             <span>COMICCRAFTE SERIES</span>
           </div>
 
-          <h1 style={s.title}>
-            Découvrir
-          </h1>
-
+          <h1 style={s.title}>Découvrir</h1>
+          
           <div style={s.subtitle}>
             {filteredStories.length} séries disponibles
           </div>
         </div>
 
-        <button style={s.filterButton}>
-          <Filter size={15} />
-        </button>
+        {/* Conteneur droite : Boutons (Bibliothèque + Filtre) */}
+        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+          {/* Bouton Bibliothèque */}
+          <button 
+            onClick={() => setView("myseries")} 
+            style={{
+              background: "rgba(255,255,255,0.05)",
+              border: "1px solid rgba(255,255,255,0.1)",
+              borderRadius: "12px",
+              padding: "10px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center"
+            }}
+          >
+            <BookOpen size={20} color="#00e5ff" />
+          </button>
+
+          {/* Bouton Filtre */}
+          <button style={s.filterButton}>
+            <Filter size={15} />
+          </button>
+        </div>
       </div>
+
 
       {/* SEARCH */}
       <div style={s.searchSection}>

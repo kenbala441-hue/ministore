@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from "react";
 import { COMICCRAFTE_STORIES } from "../data/Action";
 import { FABLES_DATABASE } from "../data/fablesDatabase";
+import { MANGA_DATABASE } from "../data/MangaDesign";
 import { SIMPLE_FABLES } from "../data/Fables";
-
+import { PUBLIC_STORIES } from "../data/publicStories"; 
 export default function SearchBar({ setSelectedStory, setView }) {
   const [query, setQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
@@ -25,7 +26,9 @@ export default function SearchBar({ setSelectedStory, setView }) {
     const all = [
       ...COMICCRAFTE_STORIES,
       ...FABLES_DATABASE,
-      ...SIMPLE_FABLES
+      ...SIMPLE_FABLES,
+      ... MANGA_DATABASE,
+      ...PUBLIC_STORIES
     ];
 
     return all

@@ -36,13 +36,16 @@ import TopCreator from "./screens/Home/components/TopCreator";
 import NewStory from "./screens/Home/components/NewStory";
 import NewsCard from "./screens/Home/components/NewsCard";
 import GenreScroll from "./screens/Home/components/GenreScroll";
-
-
+import CloudStorage from "./screens/users/CloudStorage";
+import Rewards from "./screens/users/Rewards";
+import UserProfile from "./screens/users/UserProfile";
+import SeriesHome from "./screens/Series/SeriesHome"; // Vérifie bien le chemin
+import Settings from "./screens/users/Settings";// Chemin propre et fermé
+import MySeries from './screens/Series/MySeries';
 // 🔹 Lazy loading screens utilisateur
 const Login = lazy(() => import("./screens/Login"));
 const Terms = lazy(() => import("./screens/Terms"));
 const Home = lazy(() => import("./screens/Home/Home/index.jsx"));
-const MySeries = lazy(() => import("./screens/MySeries"));
 const Store = lazy(() => import("./screens/Store"));
 const InkMarket = lazy(() => import("./screens/InkMarket"));
 const Messaging = lazy(() => import("./screens/Messaging"));
@@ -71,60 +74,122 @@ function AppContent() {
   const [authReady, setAuthReady] = useState(false);
   const [splashVisible, setSplashVisible] = useState(true);
   const [view, setView] = useState("login");
-  const [googleLoginPending, setGoogleLoginPending] = useState(false); // ✅ ici
+  const [googleLoginPending, setGoogleLoginPending] = useState(false); 
   const [selectedStory, setSelectedStory] = useState(null);
+  
+  // 🟢 LA SÉCURITÉ MANQUANTE EST ICI :
+  const [selectedUser, setSelectedUser] = useState(null); 
+
   const [isBurgerOpen, setIsBurgerOpen] = useState(false);
   const [adminOk, setAdminOk] = useState(false);
   const [authorData, setAuthorData] = useState(null);
   const [currentStory, setCurrentStory] = useState(null);
   const userStatus = "vip";
 
-  // 🔹 Auth Listener principal (CORRIGÉ : Protection Admin + Nettoyage syntaxe)
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (u) => {
-      try {
-        setUser(u || null);
-        setAuthReady(true);
 
-        // 🛡️ PROTECTION DU TUNNEL ADMIN
-        const adminViews = ["admin_gate", "admin_login", "admin_challenge", "admin_vault", "admin_dashboard"];
-        if (adminViews.includes(view)) return; 
+// ============================================================
+// 🔐 AUTH LISTENER PRINCIPAL
+// ============================================================
 
-        if (!u) {
-          setView("login");
-          return;
-        }
+useEffect(() => {
+  let isMounted = true;
 
-        const userRef = doc(db, "users", u.uid);
-        const docSnap = await getDoc(userRef);
+  const ADMIN_VIEWS = new Set([
+    "admin_gate",
+    "admin_login",
+    "admin_challenge",
+    "admin_vault",
+    "admin_dashboard",
+  ]);
 
-        if (!docSnap.exists()) {
-          setView("register");
-          return;
-        }
+  const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    if (!isMounted) return;
 
-        const data = docSnap.data() || {};
+    try {
+      setUser(firebaseUser ?? null);
+      setAuthReady(true);
 
-        if (!data.acceptedTerms) {
-          setView("terms");
-        } else if (!data.completedProfile) {
-          setView("register");
-        } else {
-          // Navigation auto uniquement si on est sur l'écran login
-          if (view === "login") {
-            if (data.role === "studio_author") setView("studio_dashboard");
-            else if (data.role === "author") setView("author_dashboard");
-            else setView("home");
-          }
-        }
-      } catch (err) {
-        console.error("Erreur auth:", err);
-        if (view === "login") setView("home");
+      // 🛡️ Protection du tunnel admin
+      if (ADMIN_VIEWS.has(view)) {
+        return;
       }
-    });
 
-    return () => unsub();
-  }, [view]); // Dépendance cruciale ici
+      // --------------------------------------------------
+      // Utilisateur déconnecté
+      // --------------------------------------------------
+      if (!firebaseUser) {
+        setView((prev) => (prev !== "login" ? "login" : prev));
+        return;
+      }
+
+      // --------------------------------------------------
+      // Chargement profil Firestore
+      // --------------------------------------------------
+      const userRef = doc(db, "users", firebaseUser.uid);
+      const userSnap = await getDoc(userRef);
+
+      if (!isMounted) return;
+
+      if (!userSnap.exists()) {
+        setView("register");
+        return;
+      }
+
+      const profile = userSnap.data() || {};
+
+      // --------------------------------------------------
+      // Vérifications obligatoires
+      // --------------------------------------------------
+      let nextView = null;
+
+      if (!profile.acceptedTerms) {
+        nextView = "terms";
+      } else if (!profile.completedProfile) {
+        nextView = "register";
+      } else {
+        switch (profile.role) {
+          case "studio_author":
+            nextView = "studio_dashboard";
+            break;
+
+          case "author":
+            nextView = "author_dashboard";
+            break;
+
+          default:
+            nextView = "home";
+        }
+      }
+
+      // --------------------------------------------------
+      // Navigation intelligente
+      // --------------------------------------------------
+      setView((currentView) => {
+        if (
+          currentView === "login" ||
+          currentView === "register" ||
+          currentView === "terms"
+        ) {
+          return nextView;
+        }
+
+        return currentView;
+      });
+    } catch (error) {
+      console.error("🔥 Auth Listener Error:", error);
+
+      setView((prev) => {
+        if (prev !== "error") return "error";
+        return prev;
+      });
+    }
+  });
+
+  return () => {
+    isMounted = false;
+    unsubscribe();
+  };
+}, [view]);
 
   // 🔹 Splash control
   useEffect(() => {
@@ -358,13 +423,16 @@ return (
                 <RegisterProfile setView={setView} user={user} />
               )}
              
-             {view === "home" && (
+
+{view === "home" && (
   <Home
     setView={setView}
     setSelectedStory={setSelectedStory}
+    setSelectedUser={setSelectedUser} // 🟢 AJOUTE CETTE PROPS ICI
     toggleBurger={() => setIsBurgerOpen(true)}
   />
 )}
+
 
 {view === "about" && (
   <About setView={setView} />
@@ -377,7 +445,22 @@ return (
               {view === "profile" && <Profile setView={setView} />}
               {view === "reader" && <Reader story={selectedStory} setView={setView} />}
               {view === "news" && <News setView={setView} setSelectedStory={setSelectedStory} />}
-              {view === "myseries" && <MySeries setView={setView} setSelectedStory={setSelectedStory} />}
+              {/* Page Bibliothèque (ton ancienne vue) */}
+{view === "myseries" && (
+  <MySeries 
+    setView={setView} 
+    setSelectedStory={setSelectedStory} 
+    // Ajoute ici tes props nécessaires si besoin
+  />
+)}
+
+{/* Page Découverte (ta nouvelle vue) */}
+{view === "series" && (
+  <SeriesHome 
+    setView={setView} 
+    setSelectedStory={setSelectedStory} 
+  />
+)}
               {view === "store" && <Store />}
               {view === "search" && <Search setView={setView} />}
               {view === "notifications" && <Notifications setView={setView} />}
@@ -390,7 +473,12 @@ return (
               {view === "themes" && <ThemeSettings setView={setView} userStatus={userStatus} />}
               {view === "security_2fa" && <Security2FA setView={setView} />}
               {view === "security_center" && <SecurityCenter user={user} />}
+              
 
+{view === "profile" && <UserProfile setView={setView} />}
+{view === "settings" && <Settings setView={setView} />}
+{view === "cloud" && <CloudStorage setView={setView} />}
+{view === "rewards" && <Rewards setView={setView} />}
 {/* 1. Écran d'avertissement initial */}
 {view === "admin_gate" && (
   <AdminGate setView={setView} />
@@ -437,7 +525,8 @@ return (
         </AnimatePresence>
       </main>
 
-      {["home","profile","reader","news","myseries","store","search","notifications"].includes(view) && (
+ {/* 🟢 NAVBAR FIXE STYLE ANDROID : Présente sur tous les écrans sauf la connexion/chargement */}
+      {!["login", "terms", "register", "admin_gate", "admin_login", "admin_challenge", "admin_vault"].includes(view) && (
         <Navbar view={view} setView={setView} />
       )}
     </div>
@@ -455,4 +544,3 @@ export default function App() {
     </UserProvider>
   );
 }
-

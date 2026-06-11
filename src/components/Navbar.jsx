@@ -70,7 +70,7 @@ export default function Navbar({ setView }) {
       icon: Newspaper,
     },
     {
-      id: "myseries",
+      id: "series", 
       label: "Séries",
       icon: BookOpen,
     },

@@ -1,521 +1,144 @@
-import React, {
-  useState,
-  useEffect,
-  useRef,
-} from "react";
+import React, { useState, useEffect, useRef } from "react";
 
-export default function AssistantGemini({
-  user,
-}) {
+export default function AssistantGemini({ user }) {
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState(""); // 🟢 État pour le texte saisi
+  const [loading, setLoading] = useState(false);
+  const [debugInfo, setDebugInfo] = useState(null);
+  const messagesEndRef = useRef(null);
+  const alreadyLoaded = useRef(false);
 
-  const [messages, setMessages] =
-    useState([]);
-
-  const [loading, setLoading] =
-    useState(false);
-
-  const [errorStatus, setErrorStatus] =
-    useState(null);
-
-  const [debugInfo, setDebugInfo] =
-    useState(null);
-
-  const [retryCount, setRetryCount] =
-    useState(0);
-
-  const alreadyLoaded =
-    useRef(false);
-
-  // =========================================================
-  // ERROR ANALYZER
-  // =========================================================
-
-  const analyzeError = (
-    err,
-    status = null
-  ) => {
-
-    const msg =
-      err?.message?.toLowerCase?.() ||
-      "";
-
-    // =========================
-    // SERVEUR OFFLINE
-    // =========================
-
-    if (
-      msg.includes("failed to fetch") ||
-      msg.includes("networkerror")
-    ) {
-      return {
-        type: "SERVER_OFFLINE",
-        title:
-          "🔌 Serveur Gemini inaccessible",
-        color: "#ff4444",
-        solution: [
-          "Vérifie si le serveur Node.js est lancé",
-          "Vérifie le port localhost:3000",
-          "Vérifie si Vite et Node tournent ensemble",
-          "Vérifie le firewall Windows",
-        ],
-      };
+  // Fonction d'analyse d'erreur conservée
+  const analyzeError = (err, status = null) => {
+    const msg = err?.message?.toLowerCase?.() || "";
+    if (msg.includes("failed to fetch") || msg.includes("networkerror")) {
+      return { title: "🔌 Serveur Gemini inaccessible (Node.js éteint)", color: "#ff4444", solution: ["Lancer le serveur Node.js", "Vérifier le port 3000"] };
     }
-
-    // =========================
-    // HTTP 404
-    // =========================
-
-    if (status === 404) {
-      return {
-        type: "API_NOT_FOUND",
-        title:
-          "📡 Route API introuvable",
-        color: "#ff8844",
-        solution: [
-          "Le endpoint /api/gemini n'existe pas",
-          "Vérifie Express routes",
-          "Vérifie server.js",
-        ],
-      };
-    }
-
-    // =========================
-    // HTTP 500
-    // =========================
-
     if (status === 500) {
-      return {
-        type: "SERVER_CRASH",
-        title:
-          "💥 Crash serveur Node.js",
-        color: "#ff0033",
-        solution: [
-          "Erreur dans le backend",
-          "Regarde terminal Node.js",
-          "Vérifie Gemini API Key",
-          "Vérifie process.env",
-        ],
-      };
+      return { title: "💥 Crash ou Clé API manquante côté Node.js", color: "#ff0033", solution: ["Vérifier la clé GEMINI_API_KEY dans le .env du serveur"] };
     }
-
-    // =========================
-    // FIREBASE
-    // =========================
-
-    if (
-      msg.includes("permission-denied")
-    ) {
-      return {
-        type: "FIREBASE_RULES",
-        title:
-          "🔒 Firestore Rules bloquent l'accès",
-        color: "#ff0033",
-        solution: [
-          "Vérifie les Firestore Rules",
-          "Vérifie request.auth",
-          "Vérifie le document users",
-        ],
-      };
-    }
-
-    // =========================
-    // ABORT
-    // =========================
-
-    if (
-      err?.name === "AbortError"
-    ) {
-      return {
-        type: "ABORTED",
-        title:
-          "⚡ Requête annulée",
-        color: "#ffaa00",
-        solution: [
-          "Composant démonté",
-          "React StrictMode",
-          "Navigation rapide",
-        ],
-      };
-    }
-
-    // =========================
-    // RATE LIMIT
-    // =========================
-
-    if (
-      status === 429 ||
-      msg.includes("quota")
-    ) {
-      return {
-        type: "RATE_LIMIT",
-        title:
-          "⏳ Limite Gemini atteinte",
-        color: "#ffaa00",
-        solution: [
-          "Trop de requêtes envoyées",
-          "Attendre quelques secondes",
-          "Limiter les appels API",
-        ],
-      };
-    }
-
-    // =========================
-    // UNKNOWN
-    // =========================
-
-    return {
-      type: "UNKNOWN",
-      title:
-        "❓ Erreur inconnue",
-      color: "#999",
-      solution: [
-        err?.message ||
-          "Erreur inconnue",
-      ],
-    };
+    return { title: "❓ Erreur de communication", color: "#999", solution: [err?.message || "Erreur inconnue"] };
   };
 
-  // =========================================================
-  // FETCH ASSISTANT
-  // =========================================================
+  // 1. Message de bienvenue automatique au chargement
+  const fetchWelcome = async () => {
+    if (alreadyLoaded.current) return;
+    alreadyLoaded.current = true;
+    setLoading(true);
+    setDebugInfo(null);
 
-  const fetchWelcome =
-    async () => {
+    try {
+      const userDisplayName = user?.name || user?.username || "Lecteur ComicCraft";
+      const res = await fetch("http://localhost:3000/api/gemini", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: `Tu es l'assistant IA officiel de ComicCraft Studio. Fais un accueil court et chaleureux pour l'utilisateur "${userDisplayName}". Donne 3 exemples rapides de ce qu'il peut te demander.`
+        }),
+      });
 
-      // 🛡️ ANTI-SPAM STRICTMODE
-      if (alreadyLoaded.current)
-        return;
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setMessages([{ sender: "gemini", text: data?.reply || "Bonjour ! Comment puis-je t'aider sur ComicCraft aujourd'hui ? 🤖" }]);
+    } catch (err) {
+      setDebugInfo(analyzeError(err));
+      setMessages([{ sender: "gemini", text: "⚠️ Assistant temporairement hors ligne. Lance ton serveur Node.js." }]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      alreadyLoaded.current = true;
+  useEffect(() => { fetchWelcome(); }, [user]);
 
-      setLoading(true);
+  // Auto-scroll vers le bas lors d'un nouveau message
+  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
-      setErrorStatus(null);
+  // 2. Envoi d'une question par l'utilisateur
+  const handleSend = async (e) => {
+    e.preventDefault();
+    if (!input.trim() || loading) return;
 
-      setDebugInfo(null);
+    const userText = input.trim();
+    setInput(""); // Vide l'input
+    setMessages((prev) => [...prev, { sender: "user", text: userText }]); // Ajoute le message de l'utilisateur à l'écran
+    setLoading(true);
+    setDebugInfo(null);
 
-      const controller =
-        new AbortController();
+    try {
+      const res = await fetch("http://localhost:3000/api/gemini", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: userText }), // Envoi du prompt de l'utilisateur au backend
+      });
 
-      const { signal } =
-        controller;
-
-      try {
-
-        const userDisplayName =
-          user?.name ||
-          user?.username ||
-          "Lecteur ComicCraft";
-
-        const res = await fetch(
-          "http://localhost:3000/api/gemini",
-          {
-            method: "POST",
-
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-
-            body: JSON.stringify({
-              prompt: `
-Bienvenue ${userDisplayName}.
-
-Explique :
-- comment utiliser ComicCraft
-- changer le thème
-- acheter Ink
-- créer des histoires
-- publier un chapitre
-              `,
-            }),
-
-            signal,
-          }
-        );
-
-        // =========================
-        // HTTP ERROR
-        // =========================
-
-        if (!res.ok) {
-
-          const info =
-            analyzeError(
-              new Error(
-                `HTTP ${res.status}`
-              ),
-              res.status
-            );
-
-          setDebugInfo(info);
-
-          throw new Error(
-            `Serveur HTTP ${res.status}`
-          );
-        }
-
-        const data =
-          await res.json();
-
-        setMessages([
-          data?.reply ||
-            "Bonjour 👋",
-        ]);
-
-      } catch (err) {
-
-        // =========================
-        // IGNORE ABORT
-        // =========================
-
-        if (
-          err?.name ===
-          "AbortError"
-        ) {
-          return;
-        }
-
-        console.error(
-          "🎯 GEMINI ERROR:",
-          err
-        );
-
-        const info =
-          analyzeError(err);
-
-        setDebugInfo(info);
-
-        setErrorStatus(
-          err?.message
-        );
-
-        setMessages([
-          "⚠️ Assistant temporairement indisponible.",
-        ]);
-
-      } finally {
-
-        if (!signal.aborted) {
-          setLoading(false);
-        }
+      if (!res.ok) {
+        const status = res.status;
+        throw new Error(`HTTP ${status}`);
       }
 
-      return () => {
-        controller.abort();
-      };
-    };
-
-  // =========================================================
-  // LOAD
-  // =========================================================
-
-  useEffect(() => {
-
-    fetchWelcome();
-
-  }, [user]);
-
-  // =========================================================
-  // RETRY
-  // =========================================================
-
-  const retryAssistant =
-    () => {
-
-      alreadyLoaded.current =
-        false;
-
-      setRetryCount(
-        (p) => p + 1
-      );
-
-      fetchWelcome();
-    };
-
-  // =========================================================
-  // UI
-  // =========================================================
+      const data = await res.json();
+      setMessages((prev) => [...prev, { sender: "gemini", text: data?.reply || "Je n'ai pas compris." }]);
+    } catch (err) {
+      setDebugInfo(analyzeError(err));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-
-    <div
-      style={{
-        padding: 15,
-        border:
-          "1px solid #333",
-        borderRadius: 14,
-        marginTop: 20,
-        background:
-          "linear-gradient(180deg,#111,#0a0a0a)",
-        boxShadow:
-          "0 0 25px rgba(0,0,0,0.4)",
-      }}
-    >
-
+    <div style={{
+      padding: 15, border: "1px solid #222", borderRadius: 14, margin: "15px 0",
+      background: "linear-gradient(180deg, #0f0f12, #050505)", display: "flex", flexDirection: "column", height: "400px"
+    }}>
       {/* HEADER */}
-
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent:
-            "space-between",
-          marginBottom: 10,
-        }}
-      >
-
-        <h4
-          style={{
-            color: "#00ffcc",
-            margin: 0,
-          }}
-        >
-          🤖 Assistant ComicCraft
-        </h4>
-
-        <span
-          style={{
-            fontSize: 11,
-            color: "#777",
-          }}
-        >
-          Retry: {retryCount}
-        </span>
-
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #222", paddingBottom: 8 }}>
+        <h4 style={{ color: "#00ffcc", margin: 0, fontSize: "13px" }}>🤖 Assistant IA ComicCraft</h4>
+        <div style={{ width: 8, height: 8, borderRadius: "50%", background: debugInfo ? "#ff4444" : "#00ffbb" }} />
       </div>
 
-      {/* LOADING */}
-
-      {loading && (
-
-        <div
-          style={{
-            color: "#aaa",
-            fontSize: 13,
-            padding: 10,
-          }}
-        >
-          ⚡ Gemini réfléchit...
-        </div>
-      )}
-
-      {/* ERROR PANEL */}
-
-      {debugInfo && (
-
-        <div
-          style={{
-            background:
-              "#1a0d0d",
-            border: `1px solid ${debugInfo.color}`,
-            padding: 12,
-            borderRadius: 10,
-            marginBottom: 12,
-          }}
-        >
-
-          <div
-            style={{
-              color:
-                debugInfo.color,
-              fontWeight: "bold",
-              marginBottom: 8,
-            }}
-          >
-            {debugInfo.title}
+      {/* ZONE DES MESSAGES DÉROULANTE */}
+      <div style={{ flex: 1, overflowY: "auto", margin: "10px 0", paddingRight: 5, display: "flex", flexDirection: "column", gap: 10 }}>
+        {messages.map((m, i) => (
+          <div key={i} style={{
+            alignSelf: m.sender === "user" ? "flex-end" : "flex-start",
+            background: m.sender === "user" ? "#00ffcc" : "#18181c",
+            color: m.sender === "user" ? "#000" : "#fff",
+            padding: "10px 14px", borderRadius: 12, maxWidth: "80%", fontSize: "12px",
+            border: m.sender === "user" ? "none" : "1px solid #252528", wordBreak: "break-word"
+          }}>
+            {m.text}
           </div>
-
-          <div
-            style={{
-              fontSize: 12,
-              lineHeight: 1.7,
-              color: "#ddd",
-            }}
-          >
-
-            {debugInfo.solution.map(
-              (s, i) => (
-                <div key={i}>
-                  • {s}
-                </div>
-              )
-            )}
-
+        ))}
+        {loading && <div style={{ color: "#777", fontSize: "11px", fontStyle: "italic" }}>⚡ Réflexion en cours...</div>}
+        {debugInfo && (
+          <div style={{ background: "#200b0b", border: `1px solid ${debugInfo.color}`, padding: 10, borderRadius: 8, color: "#ff8888", fontSize: "11px" }}>
+            <strong>{debugInfo.title}</strong>
+            {debugInfo.solution.map((s, i) => <div key={i}>• {s}</div>)}
           </div>
-
-          <button
-            onClick={
-              retryAssistant
-            }
-            style={{
-              marginTop: 12,
-              width: "100%",
-              padding: 10,
-              border: "none",
-              borderRadius: 8,
-              background:
-                "#222",
-              color: "#00ffcc",
-              cursor: "pointer",
-            }}
-          >
-            🔄 Réessayer
-          </button>
-
-        </div>
-      )}
-
-      {/* RAW ERROR */}
-
-      {errorStatus && (
-
-        <div
-          style={{
-            fontSize: 11,
-            color: "#999",
-            marginBottom: 10,
-            wordBreak:
-              "break-word",
-          }}
-        >
-          {errorStatus}
-        </div>
-      )}
-
-      {/* MESSAGES */}
-
-      <div
-        style={{
-          display: "flex",
-          flexDirection:
-            "column",
-          gap: 8,
-        }}
-      >
-
-        {messages.map(
-          (m, i) => (
-
-            <div
-              key={i}
-              style={{
-                background:
-                  "#181818",
-                padding: 12,
-                borderRadius: 10,
-                lineHeight: 1.5,
-                border:
-                  "1px solid #222",
-              }}
-            >
-              {m}
-            </div>
-          )
         )}
-
+        <div ref={messagesEndRef} />
       </div>
 
+      {/* BARRE DE SAISIE INTERACTIVE */}
+      <form onSubmit={handleSend} style={{ display: "flex", gap: 8, borderTop: "1px solid #222", paddingTop: 10 }}>
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Pose ta question à l'IA..."
+          disabled={loading}
+          style={{
+            flex: 1, background: "#111", border: "1px solid #333", borderRadius: 8,
+            padding: "8px 12px", color: "#fff", fontSize: "12px", outline: "none"
+          }}
+        />
+        <button type="submit" disabled={loading} style={{
+          background: "#00ffcc", color: "#000", border: "none", borderRadius: 8,
+          padding: "0 16px", fontWeight: "bold", fontSize: "12px", cursor: "pointer"
+        }}>
+          Envoyer
+        </button>
+      </form>
     </div>
   );
 }

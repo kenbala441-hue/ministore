@@ -1,0 +1,363 @@
+/* ============================================================
+   MESSAGE INPUT V11 — Style WhatsApp
+   Ajouter dans messaging.css ou importer séparément
+   ============================================================ */
+
+/* ── Root wrapper ─────────────────────────────────────────── */
+.mi-root {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 8px 10px 10px;
+  position: relative;
+}
+
+/* Dark theme (défaut) */
+.mi-dark {
+  background: #0b0e14;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Light theme */
+.mi-light {
+  background: #f0f2f5;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* ── Input row ────────────────────────────────────────────── */
+.mi-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+/* ── Capsule ──────────────────────────────────────────────── */
+.mi-capsule {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  border-radius: 24px;
+  padding: 0 6px 0 4px;
+  transition: box-shadow 0.2s;
+
+  /* Dark */
+  .mi-dark & {
+    background: #1f2430;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Light */
+  .mi-light & {
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  }
+}
+
+.mi-capsule:focus-within {
+  .mi-dark & { box-shadow: 0 0 0 2px rgba(0, 168, 132, 0.25); }
+  .mi-light & { box-shadow: 0 0 0 2px rgba(0, 168, 132, 0.2); }
+}
+
+/* ── Shared icon button ───────────────────────────────────── */
+.mi-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 40px;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background 0.15s, color 0.15s;
+  padding: 0;
+
+  .mi-dark & { color: #8696a0; }
+  .mi-light & { color: #54656f; }
+}
+
+.mi-icon-btn:hover {
+  .mi-dark & { background: rgba(255, 255, 255, 0.07); color: #c9d1d9; }
+  .mi-light & { background: rgba(0, 0, 0, 0.06); color: #111b21; }
+}
+
+/* ── Textarea ─────────────────────────────────────────────── */
+.mi-textarea {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 4px;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.9375rem; /* 15px — taille WhatsApp */
+  line-height: 1.4;
+  resize: none;
+  max-height: 120px;
+  font-family: inherit;
+  overflow-y: auto;
+
+  .mi-dark & { color: #e9edef; }
+  .mi-light & { color: #111b21; }
+}
+
+.mi-textarea::placeholder {
+  .mi-dark & { color: #8696a0; }
+  .mi-light & { color: #8696a0; }
+}
+
+.mi-textarea:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ── Attach group ─────────────────────────────────────────── */
+.mi-attach-group {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-shrink: 0;
+}
+
+/* ── Hidden file input ────────────────────────────────────── */
+.mi-hidden-input {
+  display: none;
+}
+
+/* ── Send button ──────────────────────────────────────────── */
+.mi-send-btn {
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.12s, box-shadow 0.2s;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+
+  /* Idle — micro grisé */
+  .mi-dark & { background: #1f2430; color: #8696a0; }
+  .mi-light & { background: #e9edef; color: #54656f; }
+}
+
+/* Active — vert WhatsApp */
+.mi-send-btn--active {
+  background: #00a884 !important;
+  color: #fff !important;
+  box-shadow: 0 3px 10px rgba(0, 168, 132, 0.4) !important;
+}
+
+.mi-send-btn--active:hover {
+  background: #00c49a !important;
+  transform: scale(1.06);
+}
+
+.mi-send-btn--active:active {
+  transform: scale(0.94);
+}
+
+/* Sending animation */
+.mi-send-btn--sending {
+  background: #00a884 !important;
+  cursor: wait;
+}
+
+.mi-send-icon {
+  transform: translateX(1px); /* micro-ajustement esthétique */
+}
+
+/* ── Spinner (sending) ────────────────────────────────────── */
+.mi-send-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: mi-spin 0.65s linear infinite;
+}
+
+@keyframes mi-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Emoji panel ──────────────────────────────────────────── */
+.mi-emoji-panel {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 4px;
+  padding: 10px 12px;
+  margin-bottom: 4px;
+  border-radius: 16px;
+  animation: mi-slide-up 0.15s ease-out both;
+
+  .mi-dark & {
+    background: #1a1d27;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+  }
+  .mi-light & {
+    background: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  }
+}
+
+@keyframes mi-slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.mi-emoji-item {
+  font-size: 22px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 4px;
+  transition: transform 0.1s, background 0.1s;
+  line-height: 1;
+  text-align: center;
+}
+
+.mi-emoji-item:hover {
+  transform: scale(1.25);
+  .mi-dark & { background: rgba(255, 255, 255, 0.08); }
+  .mi-light & { background: rgba(0, 0, 0, 0.05); }
+}
+
+/* ── Media preview ────────────────────────────────────────── */
+.mi-media-preview {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 6px;
+  max-height: 160px;
+
+  .mi-dark & { background: #161a23; border: 1px solid rgba(255,255,255,0.06); }
+  .mi-light & { background: #e9edef; border: 1px solid rgba(0,0,0,0.08); }
+}
+
+.mi-preview-img {
+  width: 100%;
+  max-height: 160px;
+  object-fit: cover;
+  display: block;
+}
+
+.mi-preview-audio {
+  width: 100%;
+  padding: 8px 12px;
+  display: block;
+  height: 40px;
+}
+
+.mi-preview-file {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  font-size: 13px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+
+  .mi-dark & { color: #c9d1d9; }
+  .mi-light & { color: #111b21; }
+}
+
+.mi-preview-clear {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  transition: background 0.15s;
+}
+
+.mi-preview-clear:hover { background: rgba(0, 0, 0, 0.8); }
+
+/* ── Reply banner ─────────────────────────────────────────── */
+.mi-reply-banner {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  border-radius: 10px;
+  animation: mi-slide-up 0.15s ease-out both;
+
+  .mi-dark & { background: rgba(255, 255, 255, 0.05); }
+  .mi-light & { background: rgba(0, 0, 0, 0.05); }
+}
+
+.mi-reply-bar {
+  width: 3px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  background: #00a884;
+}
+
+.mi-reply-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mi-reply-author {
+  font-size: 12px;
+  font-weight: 600;
+  color: #00a884;
+}
+
+.mi-reply-text {
+  font-size: 13px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+
+  .mi-dark & { color: #8696a0; }
+  .mi-light & { color: #667781; }
+}
+
+/* ── Error toast ──────────────────────────────────────────── */
+.mi-error-toast {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 10px;
+  margin-bottom: 6px;
+  font-size: 12.5px;
+  color: #ff6b6b;
+  background: rgba(255, 80, 80, 0.1);
+  border: 1px solid rgba(255, 80, 80, 0.18);
+}
+
+.mi-error-retry {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: #ff8787;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+
+.mi-error-retry:hover { background: rgba(255, 80, 80, 0.15); }

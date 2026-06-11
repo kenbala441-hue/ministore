@@ -42,7 +42,7 @@ const AudioPane = ({
   local,
   up,
   isPlaying,
-  setIsPlaying,
+  handlePlayPause,
 }) => {
   return (
     <div className="audio-engine-v4">
@@ -86,12 +86,11 @@ const AudioPane = ({
         </button>
 
         <button
-          type="button"
-          className="play-btn"
-          onClick={() =>
-            setIsPlaying((p) => !p)
-          }
-        >
+  type="button"
+  className="play-btn"
+  onClick={handlePlayPause}
+>
+
           {isPlaying ? (
             <Pause
               size={22}
@@ -258,6 +257,103 @@ export const SettingsMenu = ({
       [key]: value,
     }));
   };
+  
+  // ================== MOTEUR AUDIO IA (TEXT-TO-SPEECH) ==================
+  const handlePlayPause = () => {
+    // Si l'audio tourne déjà, on l'arrête proprement et immédiatement
+    if (isPlaying || window.speechSynthesis?.speaking) {
+      window.speechSynthesis?.cancel();
+      setIsPlaying(false);
+      return;
+    }
+
+    // 1. Détection des éléments dans la zone de lecture (balise <main> ou sélecteur de secours)
+    let paragraphs = Array.from(document.querySelectorAll("main p"));
+    if (paragraphs.length === 0) {
+      // Sécurité si l'application utilise une autre structure
+      paragraphs = Array.from(document.querySelectorAll(".chapter-content p, .reader-content p"));
+    }
+    const images = document.querySelectorAll("main img, .chapter-content img, .reader-content img");
+
+    // 2. CAS SÉCURITÉ : Si c'est un format Webtoon/Manga ou que le mode sélectionné est Webtoon/Manga
+    if ((paragraphs.length === 0 && images.length > 0) || local.readerMode === "Webtoon" || local.readerMode === "Manga") {
+      alert("📥 Format visuel détecté : L'Audio IA ne prend en compte que les textes (Livre / Novel).");
+      setIsPlaying(false);
+      return;
+    }
+
+    // 3. CAS SÉCURITÉ : Si la page est totalement vide de texte
+    if (paragraphs.length === 0) {
+      alert("❌ Aucun texte lisible n'a été trouvé dans ce chapitre.");
+      setIsPlaying(false);
+      return;
+    }
+
+    // Nettoyage et rassemblement du texte des paragraphes
+    const textesFiltres = paragraphs
+      .map(p => p.innerText.trim())
+      .filter(txt => txt.length > 0);
+
+    if (textesFiltres.length === 0) {
+      alert("❌ Le texte trouvé est vide ou illisible.");
+      setIsPlaying(false);
+      return;
+    }
+
+    // 4. Lancement de la configuration de lecture
+    setIsPlaying(true);
+
+    // Fonction interne pour lire une liste de phrases (évite le bug des textes trop longs sur mobile)
+    const speakTextChunks = (chunks) => {
+      if (chunks.length === 0) {
+        setIsPlaying(false);
+        return;
+      }
+
+      // On extrait le premier morceau de texte à lire
+      const currentChunk = chunks.shift();
+      const utterance = new SpeechSynthesisUtterance(currentChunk);
+      
+      // Configuration depuis l'état local
+      utterance.volume = Math.min(1, Math.max(0, local.audioVolume / 100));
+      utterance.rate = Math.min(2, Math.max(0.5, local.audioSpeed));
+      utterance.lang = "fr-FR";
+
+      // Sélection dynamique de la voix système
+      const voices = window.speechSynthesis.getVoices();
+      let voiceSelected = voices.find(v => v.lang.startsWith("fr-") || v.lang === "fr-FR");
+      
+      if (local.voice === "female") {
+        voiceSelected = voices.find(v => v.lang.startsWith("fr") && (v.name.toLowerCase().includes("google") || v.name.toLowerCase().includes("female") || v.name.toLowerCase().includes("zira") || v.name.toLowerCase().includes("hortense")));
+      } else {
+        voiceSelected = voices.find(v => v.lang.startsWith("fr") && (v.name.toLowerCase().includes("male") || v.name.toLowerCase().includes("paul") || !v.name.toLowerCase().includes("female")));
+      }
+      
+      if (voiceSelected) utterance.voice = voiceSelected;
+
+      // Événements de contrôle de flux
+      utterance.onend = () => {
+        // Lit le morceau suivant dès que celui-ci est fini
+        speakTextChunks(chunks);
+      };
+
+      utterance.onerror = (e) => {
+        console.error("SpeechSynthesis error:", e);
+        // Si ce n'est pas un arrêt manuel, on passe à la suite ou on coupe
+        if (e.error !== "interrupted") {
+          speakTextChunks(chunks);
+        } else {
+          setIsPlaying(false);
+        }
+      };
+
+      window.speechSynthesis.speak(utterance);
+    };
+
+    // On lance la lecture segmentée
+    speakTextChunks(textesFiltres);
+  };
+
 
   /* =========================================================
      💾 SAVE SETTINGS
@@ -797,17 +893,16 @@ export const SettingsMenu = ({
                   </div>
                 )}
 
-                {/* AUDIO */}
-                {view === "audio" && (
-                  <AudioPane
-                    local={local}
-                    up={up}
-                    isPlaying={isPlaying}
-                    setIsPlaying={
-                      setIsPlaying
-                    }
-                  />
-                )}
+{/* AUDIO */}
+{view === "audio" && (
+  <AudioPane
+    local={local}
+    up={up}
+    isPlaying={isPlaying}
+    handlePlayPause={handlePlayPause}
+  />
+)}
+
 
                 {/* SCROLL */}
                 {view === "scroll" && (

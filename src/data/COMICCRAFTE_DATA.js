@@ -265,6 +265,238 @@ export const COMICCRAFTE_STORIES = [
     isOriginal: true,
     chapters: [{ id: 0, title: "Chapitre 1", pages: ["Les lumières de la ville cachent la vérité."] }]
   },
+{
+  id: "999-lives-01",
+
+  title: "999 Lives After The End",
+
+  author: "ComicCrafte Studio",
+
+  coverImage: "https://res.cloudinary.com/dn9c4ctav/image/upload/v1781100045/file_000000006d5071f4b714fb803576facf_aijysv.png",
+
+  genres: [
+    "dark-fantasy",
+    "action",
+    "reincarnation"
+  ],
+
+  viewsCount: 0,
+  likesCount: 0,
+
+  isOriginal: true,
+
+  chapters: [
+    {
+      id: 1,
+
+      title: "CHAPITRE 1 — La Fin du Cycle",
+
+      pages: [
+`# CHAPITRE 1 — La Fin du Cycle
+
+« À la base… tout ce que je faisais…
+c’était pour arriver à ce moment précis. »
+
+Le souffle de Vael était lourd.
+
+Chaque respiration brûlait sa gorge.
+
+Du sang coulait le long de son bras tandis que le monde lui-même semblait s’effondrer autour de lui.
+
+Le ciel était fissuré.
+
+Les océans avaient été séparés par les impacts.
+
+Des montagnes entières s’étaient écroulées pendant leur affrontement.
+
+Trois jours.
+
+Trois jours de bataille ininterrompue.
+
+Trois jours où même les lois du monde avaient cessé de fonctionner.
+
+Mais malgré la douleur…
+
+Vael avançait encore.
+
+Encore.
+
+Et encore.
+
+Parce qu’il ne restait plus que ça.
+
+Ses 999 vies.
+
+Les guerres.
+
+Les massacres.
+
+Les ordres des dieux.
+
+Les démons qu’il avait exterminés.
+
+Les royaumes détruits.
+
+Les amis enterrés.
+
+Les familles qu’il n’avait jamais réussi à sauver.
+
+Tout cela devait avoir un sens.
+
+Tout cela devait mener à cette fin.
+
+Pour eux.
+
+Pour tous ceux qui avaient cru en lui.
+
+Le vent explosa brutalement autour des deux monstres.
+
+La terre se brisa sous leurs pieds.
+
+Puis…
+
+Vael leva lentement son épée.
+
+Une lame noire couverte de fissures lumineuses.
+
+L’arme tremblait.
+
+Comme si elle aussi avait atteint sa limite.
+
+En face de lui…
+
+NOXERIS.
+
+La Calamité Primordiale.
+
+Une créature gigantesque dont le corps semblait composé d’ombres vivantes et d’yeux ouverts dans toutes les directions.
+
+Même le ciel refusait de regarder cette chose.
+
+Vael disparut soudainement.
+
+Puis—
+
+Une explosion blanche déchira l’horizon.
+
+L’épée traversa l’abdomen de NOXERIS.
+
+Le temps s’arrêta.
+
+Le monstre cracha du sang noir.
+
+Ses yeux s’écarquillèrent lentement.
+
+« …Impossible… »
+
+Sa voix résonna comme des milliers de murmures mélangés.
+
+« Comment un humain peut-il posséder autant de pouvoir… ? »
+
+Du sang coulait de la bouche de Vael.
+
+Ses bras tremblaient.
+
+Son corps entier était détruit.
+
+Mais il tenait encore debout.
+
+NOXERIS le regarda fixement.
+
+Puis…
+
+la Calamité sourit.
+
+« Tu ne comprends toujours pas… »
+
+Le vent commença lentement à disparaître.
+
+La gravité reprenait sa place.
+
+Le monde redevenait silencieux.
+
+« Même après 999 vies… »
+
+Les yeux de NOXERIS devinrent étrangement calmes.
+
+« …tu t’es trompé d’ennemi. »
+`
+      ]
+    },
+
+    {
+      id: 2,
+
+      title: "CHAPITRE 2 — Les Véritables Monstres",
+
+      pages: [
+`# CHAPITRE 2 — Les Véritables Monstres
+
+Le cœur de Vael se serra.
+
+« Les véritables monstres… »
+
+Le monstre approcha son visage du sien.
+
+« …sont toujours ceux qu’on soupçonne le moins. »
+
+Puis son immense corps commença à se désintégrer.
+
+Vael resta immobile.
+
+Son épée glissa lentement de ses mains.
+
+CLANG.
+
+Le bruit métallique résonna dans le silence du monde.
+
+C’était fini.
+
+Enfin.
+
+Ses jambes tremblèrent.
+
+Il regarda le ciel fissuré.
+
+Puis murmura faiblement :
+
+« Mes amis… »
+
+Sa voix se brisa.
+
+« …je vais enfin pouvoir vous rejoindre. »
+
+Une lumière blanche apparut derrière lui.
+
+Douce.
+
+Presque chaleureuse.
+
+Vael ferma lentement les yeux.
+
+« C’est enfin terminé… »
+
+Mais quand il ouvrit les yeux…
+
+quelqu’un était là.
+
+Une femme vêtue d’un voile blanc.
+
+Son visage était invisible.
+
+Une Messagère des Aethernels.
+
+Elle s’approcha lentement.
+
+« Vael Drakhar. »
+
+Sa voix était froide.
+
+Vide.
+
+« Les dieux tiennent à te remercier pour les services rendus. »
+`] }]
+  },
   {
     id: "dark-soul-01",
     title: "Dark Soul",
